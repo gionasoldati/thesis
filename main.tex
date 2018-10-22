@@ -1,0 +1,138 @@
+\documentclass[12pt, a4paper, oneside]{book}
+
+
+\include{packages}
+
+%% remark theoremstyle
+%\newtheoremstyle{break}
+%{\topsep}{\topsep}%
+%{\itshape}{}%
+%{\bfseries}{}%
+%{\newline}{}%
+%\theoremstyle{break}
+%\newtheorem{remark}{Remark}[section]
+
+% problem theoremstyle
+%\newtheoremstyle{problemstyle}  % <name>
+%{10pt}  % <space above>
+%{10pt}  % <space below>
+%{\normalfont} % <body font>
+%{}  % <indent amount}
+%{\bfseries\itshape} % <theorem head font>
+%{\normalfont\bfseries:} % <punctuation after theorem head>
+%{.5em} % <space after theorem head>
+%{} % <theorem head spec (can be left empty, meaning `normal')>
+%\theoremstyle{problemstyle}
+%\newtheorem{problem}{Problem}[section] % Comment out [section] toremove section number dependence
+%\newtheorem{definition}{Definition}[section]
+%\newtheorem{theorem}{Theorem}[section]
+%\newtheorem{proposition}{Proposition}[section]
+%\newtheorem{remark}{Remark}[section]
+%\newtheorem{lemma}{Lemma}[section]
+% create command for variance in math mode
+%\newcommand{\Var}[1]{\operatorname{Var}\left[#1\right]}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{mydef}{Definition}[section]
+\newtheorem{myexample}{Example}[section]
+\newtheorem{myprop}{Proposition}[section]
+
+\renewcommand\textflush{flushright}
+\setlength\epigraphwidth{.6\textwidth}
+
+\makeglossaries
+\include{Glossary/Glossary}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+	language=Java,
+	aboveskip=3mm,
+	belowskip=3mm,
+	showstringspaces=false,
+	columns=flexible,
+	basicstyle={\small\ttfamily},
+	numbers=none,
+	numberstyle=\tiny\color{gray},
+	keywordstyle=\color{blue},
+	commentstyle=\color{dkgreen},
+	stringstyle=\color{mauve},
+	breaklines=true,
+	breakatwhitespace=true,
+	tabsize=3
+}
+
+
+\begin{document}
+
+%----------------------------------------------------------------------------------------
+% COVER PAGE
+%----------------------------------------------------------------------------------------
+\pagestyle{empty}
+\input{Cover/cover}
+
+%----------------------------------------------------------------------------------------
+% ABSTRACT
+%---------------------------------------------------------------------------------------
+
+%% Set page numbers of the introduction to roman  
+\frontmatter
+\pagestyle{plain}
+%\include{Abstract/abstract}
+
+%\cleardoublepage
+\vspace*{\fill}
+\epigraph{\textit{Inserire frase memorabile.}}{Qualcuno di tosto.}
+\vspace*{\fill}
+
+
+%----------------------------------------------------------------------------------------
+%	LIST OF CONTENTS/FIGURES/TABLES PAGES
+%----------------------------------------------------------------------------------------
+
+\tableofcontents
+\listoftables
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoffigures
+\addcontentsline{toc}{chapter}{List of Figures}
+\listofalgorithms
+\addcontentsline{toc}{chapter}{List of Algorithms}
+\printglossaries
+
+\include{Abstract/abstract}
+\include{Acknowledgement/acknowledgement}
+
+%----------------------------------------------------------------------------------------
+%	THESIS CONTENT - CHAPTERS
+%----------------------------------------------------------------------------------------
+
+\mainmatter
+
+\include{Chapters/Introduction}
+\include{Chapters/Math_intro}
+\include{Chapters/ECC}
+\include{Chapters/Digital_signature}
+\include{Chapters/Schnorr_application}
+
+%----------------------------------------------------------------------------------------
+%	THESIS CONTENT - APPENDICES
+%----------------------------------------------------------------------------------------
+
+\appendix
+\input{Appendix/AppendixA}
+
+
+\backmatter
+%----------------------------------------------------------------------------------------
+%	BIBLIOGRAPHY
+%----------------------------------------------------------------------------------------
+
+\backmatter
+\nocite{*}
+\bibliographystyle{acm}
+\bibliography{Bibliography/biblio}
+
+
+
+\end{document}  

@@ -1,0 +1,37 @@
+\chapter{Introduction}
+\label{chpr:intro}
+\section{Problem under analysis}
+Descrivi il problema considerato
+
+\bigskip
+
+\bigskip
+
+\section{Thesis structure}
+Descrivi la struttura della tesi.
+
+\bigskip
+
+\bigskip
+
+\section{Notation}
+\begin{itemize}
+\item Prime numbers: the lowercase letter $p$ is used to represent an odd prime number;
+\item Fields: for a general field the letter $K$ is used, while the finite field of order $q = p^k$, where $p$ is an odd prime and $k$ an integer, are represented as $\mathbb{F}_q$;
+\item Elliptic curves: in general an elliptic curve over a field $K$ is denoted by $E(K)$, which represents the set of points satisfying the generalized Weierstrass equation with coefficients in $K$ plus the point at infinity. Lowercase letters are used to denote scalars, while the uppercase equivalent denotes the linked EC point, e.g. $qG = Q = (x_Q, y_Q)$ ($G$ is reserved to the generator of the group). Whenever a second generator is needed we use the capital letter $H$: this does not constitute a conflict with the cofactor since typically the two generators are NUMS (nothing up my sleeves), meaning that we do not know the discrete logarithm of one with respect to the other and viceversa;
+\item Elliptic curves' key pair: the pair of private and public key is denoted as $\{q, Q\}$, where $Q = qG$. Whenever a second point is needed we use the couple $\{r, R\}$; if more key pairs are needed subscripts are used, e.g. $q_1G = Q_1 = (x_1, y_1)$, $q_2G = Q_2 = (x_2, y_2)$ and $q_3G = Q_3 = (x_3, y_3)$. Notice that, for the sake of clarity, also the coordinate notations is adapted.
+\item Algorithms:
+    \begin{itemize}
+		\item $||$ refers to byte array concatenation;
+		\item $a \gets b$ refers to the operation of assignment;
+		\item $z \xleftarrow{\text{\$}} Z$ denotes uniform sampling from the set $Z$ and assignment to $z$;
+		\item The function $\text{bytes}(x)$, where $x$ is an integer, returns the byte encoding of $x$;
+		\item The function $\text{bytes}(Q)$, where $Q$ is a point, returns $bytes(0\text{x}02 + (y_Q \& 1))$ $ || \ bytes(x_P)$\footnote{This matches the compressed encoding for elliptic curve points used in Bitcoin already, following the standard in \cite{RefWork:2}.};
+		\item The function $\text{int}(x)$, where $x$ is a byte array, returns the unsigned integer whose most significant byte encoding is $x$;
+		\item The function $\text{hash}(x)$, where $x$ is a byte array, returns the hash of $x$. In particular, when dealing with Schnorr signature, it returns the 32 byte SHA-256 of $x$;
+		\item The function $\text{jacobi}(x)$, where $x$ is an integer, returns the Jacobi symbol $\left(\frac{x}{p}\right)$. In general we have: $$\left(\frac{x}{p}\right)= \begin{cases} 0, & \text{if gcd}(x, p) \neq 1 \\ \pm 1, & \mbox{if gcd}(x, p) = 1 \end{cases}$$
+		Moreover we have that if $\left(\frac{x}{p}\right) = - 1$ then $x$ is not a quadratic residue modulo $p$ (i.e. has not a square root modulo the field order) and that if $x$ is a quadratic residue modulo $p$ and $\text{gcd}(x, p) = 1$, then $\left(\frac{x}{p}\right) = 1$. However, unlike the Legendre symbol, if $\left(\frac{x}{p}\right) = 1$ then $x$ may or may not be a quadratic residue modulo $p$. Fortunately enough, since $p$ is an odd prime we have that the Jacobi symbol is equal to the Legendre symbol. Thus we can check only whether $\left(\frac{x}{p}\right) = 1$ to assess if $x$ is or is not a quadratic residue modulo $p$.
+		\\
+		Moreover, by Euler's criterion we have that $\left(\frac{x}{p}\right) = x^{\frac{p - 1}{2}} \ (\text{mod} \ p)$, so that we have an efficient way to compute it.
+	\end{itemize}	
+\end{itemize}

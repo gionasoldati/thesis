@@ -1,0 +1,175 @@
+\chapter{Signatures in Bitcoin}
+\label{app:A}
+In this appendix we will analyse the role of ECDSA in Bitcoin, starting with a general overview of the protocol, focusing our attention on transactions and blocks. Then we will give a low level description of Bitcoin scripting language, some spending policies and their relation with signatures. More complex subjects, such as SegWit, being out of the scope of the present work will not be presented. We refer the interested reader to the dedicated literature (starting from \cite{BIP1}, \cite{BIP2}, \cite{BIP3} and \cite{BIP4}). An easily understandable and complete introduction to Bitcoin can be found in \cite{RefWork:7}.
+
+\bigskip
+\noindent
+In its basic form, a transaction is a transfer of bitcoins from a participant of the Bitcoin network to another user. Multi-signature constructions can be easily understood once the basic transaction is mastered. However is important to point out that these are not at all the unique possibilities: the presence of a scripting language, despite its simplicity, allows very flexible and complex constructions. Every transaction is broadcasted to each node in the network and each one, separately, validate it. Obviously one node propagate a transaction only if it is deemed valid: here is when signatures come in. Typically they are used to prove to the other users in the network ownership of the funds we are attempting to spend. Groups of transactions are collected into a data structure called block, by special nodes in the network called miners. The action of building blocks is very expensive from a computational point of view (requiring much energy this traduces in high costs): for this reason, miners are rewarded for their work with the issuance of new bitcoins. These blocks are chained one another including in the header of a block the hash of the previous one, creating the so called blockchain: an append only data structure. This means that altering a transaction requires not only the modification of the block containing it, but also of all the subsequent blocks. This traduces in the alleged immutability of the Bitcoin blockchain. In a nutshell, this is how it is possible to achieve consensus about an economic history among a distrustful set of participants.
+\\
+Now let's get back to the transaction data structure and give it a deeper look. A Bitcoin transaction consists of some inputs and some outputs: the inputs being references to some unspent outputs of previous transactions, and the outputs representing the new ownership of bitcoins\footnote{The inputs of a transaction are completely spent by it. This implies that if the amount is greater than the one we intend to transfer, we have to create also an output returning the difference to ourselves.}. These outputs are locked by the so called locking script (also referred to as scriptPubKey due to historical reasons), a script written in a special stack based, turing incomplete language (the Bitcoin scripting language). To unlock the funds (i.e. to spend them), the owner has to provide a proof of ownership in the form of an unlocking script (scriptSig), that usually comprise a digital signature. The difference in bitcoin value from inputs and outputs is collected by the miner who mines the block, and is called transaction fee (obviously the sum of the outputs' values cannot exceed the sum of the inputs' values).
+\\
+Before we pass to the real life example, we would like to stress the fact that bitcoins exist only as unspent transaction output, and the so called wallets actually store the private keys needed to unlock these outputs, and not bitcoins. A proper renaming would be keychain.
+\\
+\\
+Here follows an example of Bitcoin transaction, taken from block number 286731 (determined by the block hash 0000000000000000bf3856e067ec21f4c30 a8a859cc7ed7f2de9a2b579200639\footnote{\url{https://blockexplorer.com/block/0000000000000000bf3856e067ec21f4c30a8a859cc7ed7f2de9a2b579200639}.}):
+
+\lstdefinestyle{mystyle}{
+	backgroundcolor=\color{gray!30},   
+	commentstyle=\color{green},
+	keywordstyle=\color{blue},
+	numberstyle=\tiny\color{gray},
+	stringstyle=\color{black},
+	basicstyle=\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\begin{lstlisting}[frame=single]
+{
+"hash":"90b18aa54288ec610d83ff1abe90f10d8ca87fb6411a72b2e56a169fdc9b0219",
+"ver":1,
+"vin_sz":1,
+"vout_sz":2,
+"lock_time":0,
+"size":226,
+"in":[
+{
+"prev_out":{
+"hash":"18798f8795ded46c3086f48d5bdabe10e1755524b43912320b81ef547b2f939a",
+"n":0
+},
+"scriptSig":"3045022100c1efcad5cdcc0dcf7c2a79d9e1566523af9c7229c78ef71ee8 
+					   b6300ab59aa63d02201fe27c3e6374dd3a5425a577d9ca6ad8ff079800
+					   175ef9a4475bc98bcef21cf01023b027d54ce8b6c730e0d5833f73aec6a
+					   5bae4efe04f57d2864a6a7df2af56e46"
+}
+],
+"out":[
+{
+"value":"5.93100000",
+"scriptPubKey":"OP_DUP OP_HASH160 4b358739fc7984b8101278988beba0cc00867adc OP_EQUALVERIFY OP_CHECKSIG"
+},
+{
+"value":"1678.06900000",
+"scriptPubKey":"OP_DUP OP_HASH160 55368b388ccfe22a3f837c9eee93d053460db339 OP_EQUALVERIFY OP_CHECKSIG"
+}
+]
+}
+\end{lstlisting}
+This is a representation of the transaction in human readable terms. The first voice is the transaction hash value, uniquely determining the transaction. Then we have the version number, the number of inputs, the number of outputs, the lock time\footnote{Part of a transaction which indicates the earliest time or earliest block when that transaction may be added to the blockchain.} and the size of the transaction in bytes.
+\\
+Then we have the inputs and the outputs: for what concerns the unique input we have the hash defining the transaction from which we take the unspent transaction output (UTXO) number 0, as determined from the subsequent voice n; that is, we look for the transaction determined by the hash value "18798...2f939a" and take its first output. The scriptSig is the script needed to unlock the funds, that we will study in a while.
+\\
+The outputs are determined by the value and by the scriptPubKey, that contains a mathematical puzzle that the owner has to solve to spend the coins. The scriptPubKey has this name since originally it contained the public key of the receiver: due to privacy and security reasons this is not anymore the case, and we can find the address\footnote{An address is the result of the operator OP\_HASH160 applied to the public key: first it is applied the SHA-256, then the RIPEMD160, another hash function that outputs in the space of 160 bits, or 20 bytes} related to the receiver in it. 
+
+\bigskip
+\noindent
+Now let's analyse ScriptSig and ScriptPubKey more in detail. For the transactions of type Pay-to-PubKeyHash (P2PKH, like the ones in the example) the couple of scripts has the following form:
+\begin{lstlisting}[frame=single]
+scriptPubKey: OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
+scriptSig: <sig> <pubKey>
+\end{lstlisting}
+Getting back to our example we can see that the scripts in there are written exactly in this way. It is easy to notice for the two scripPubKey's, since they have exactly the same structure, with two addresses of 20 bytes.
+\\
+It is not that immediate for what concerns the scriptSig. But we know that it ends with a public key, that consist in 33 bytes (in compressed form), thus we can easily separate the signature from the public key:
+\begin{lstlisting}[frame=single]
+sig: 3045022100c1efcad5cdcc0dcf7c2a79d9e1566523af9c7229c78ef71ee8b6300ab59aa63d
+02201fe27c3e6374dd3a5425a577d9ca6ad8ff079800175ef9a44475bc98bcef21cf01
+publickey: 023b027d54ce8b6c730e0d5833f73aec6a5bae4efe04f57d2864a6a7df2af56e46
+\end{lstlisting}
+Once the transaction is received by a node, it has to be validated. Table \ref{table:app1} presents the validation procedure of the input.
+
+\bigskip
+\noindent
+After having looked at the basic construction we can give a deeper look to the verification procedure for an $m$-of-$n$ multi-signature transaction. But first, let's try to understand why they are so appealing. 
+\\
+The primary benefit is to greatly increase the difficulty of stealing the coins. With a 2-of-2 address, you can keep the two keys on separate machines, and then theft will require compromising both; it can also be used to protect against accidental loss: with a 2-of-3 address, not only does theft require obtaining 2 different keys, but you can still use the coins if you forget any single key; it can also be used for more advanced scenarios such as an address shared by multiple people, where a majority of vote is required to use the funds. This setting would be typically used for corporate accounts, with different layers for security, and by escrow services. For practical reasons, multi-signature transactions are fundamental for a proper custody of the digital assets.
+
+\bigskip
+\noindent
+In the $m$-of-$n$ scenario, the couple of scripts would look something like this:
+\begin{lstlisting}[frame=single]
+scriptPubKey: m <pubKey1> <pubKey2> ... <pubKeyn> n OP_CHECKMULTISIG
+scriptSig: 0 <sig1> <sig2> ... <sigm>
+\end{lstlisting}
+The scriptSig starts with a zero due to a bug in the OP\_CHECKMULTISIG operator, that requires an additional dummy element to work.
+\\		
+The verification procedure in this case is exemplified in Table \ref{table:app2}.
+
+\begin{center}
+	\noindent
+	\makebox[\textwidth]{
+		\begin{tabular}{| p{5cm} | p{5cm} | p{5cm} |}
+			\hline
+			\rowcolor{lightgray}
+			Stack & Script & Description \\
+			\hline			
+			Empty. & $<$sig$>$ $<$pubKey$>$ OP\_DUP OP\_HASH160 $<$pubKeyHash$>$ OP\_EQUALVERIFY OP\_CHECKSIG & The scriptSig and the scriptPubKey  are combined. \\
+			\hline
+			$<$sig$>$ $<$pubKey$>$ & OP\_DUP OP\_HASH160 $<$pubKeyHash$>$ OP\_EQUALVERIFY OP\_CHECKSIG & The signature and the public key are added to the stack.  \\
+			\hline
+			$<$sig$>$ $<$pubKey$>$ $<$pubKey$>$ & OP\_HASH160 $<$pubKeyHash$>$ OP\_EQUALVERIFY OP\_CHECKSIG & The operator OP\_DUP takes the last element on the stack and puts a duplicate of it on top.  \\
+			\hline 
+			$<$sig$>$ $<$pubKey$>$ $<$pubHash$>$ & $<$pubKeyHash$>$ OP\_EQUALVERIFY OP\_CHECKSIG & The OP\_HASH160 takes the public key as input and applies to it in sequence SHA-256 and RIPEMD160.  \\
+			\hline 
+			$<$sig$>$ $<$pubKey$>$ $<$pubHash$>$ $<$pubKeyHash$>$ & OP\_EQUALVERIFY OP\_CHECKSIG & The address $<$pubKeyHash$>$ is pushed on top of the stack.  \\
+			\hline  
+			$<$sig$>$ $<$pubKey$>$ & OP\_CHECKSIG & OP\_EQUALVERIFY checks that the last two elements on top of the stack are equal. If not, the validation fails.  \\
+			\hline
+			True. & Empty. & OP\_CHECKSIG checks that the signature really comes from the public key present in the unlocking script. The validation process succeeds if at the end on the stack there is a boolean value indicating true.  \\
+			\hline 
+		\end{tabular}
+	}\captionof{table}{Verification procedure for a P2PKH transaction.}
+	\label{table:app1}
+\end{center}
+
+\begin{center}
+	\noindent
+	\makebox[\textwidth]{
+		\begin{tabular}{| p{5cm} | p{5cm} | p{5cm} |}
+			\hline
+			\rowcolor{lightgray}
+			Stack & Script & Description \\
+			\hline			
+			Empty. & 0 $<$sig1$>$ $<$sig2$>$ ... $<$sigm$>$ m $<$pubKey1$>$ $<$pubKey2$>$ ... $<$pubKeyn$>$ n OP\_CHECKMULTISIG & The scriptSig and the scriptPubKey  are combined. \\
+			\hline
+			0 $<$sig1$>$ $<$sig2$>$ ... $<$sigm$>$ m $<$pubKey1$>$ $<$pubKey2$>$ ... $<$pubKeyn$>$ n & OP\_CHECKMULTISIG & All the constants are added to the stack. \\
+			\hline
+			True. & Empty. & OP\_CHECKMULTISIG checks whether the $m$ signatures come from some of the $n$ public keys. \\
+			\hline 
+		\end{tabular}
+	}\captionof{table}{Verification procedure for an input locked by an $m$-of-$n$ policy.}
+	\label{table:app2}
+\end{center}
+
+\bigskip
+\noindent
+As the reader may have detected another small flaw of the multi-signature construction adopted in Bitcoin is that the signatures have to be ordered as the public keys in the locking script. Since verification is made by subsequent attempts (first signature checked against first public key: if valid pass to the second signature, otherwise check the first signature against the second public key), a proper ordering traduces in a faster verification.
+
+\bigskip
+\noindent
+In the Bitcoin network, the bigger a transaction is in bytes, the more costly it is in terms of transaction fees. With the previous construction for the multi-signature account, the burden had to be carried by the payer, even if it was the receiver who asked for a multi-signature locking script. This is the main reason that led to the creation of Pay-to-Script-Hash (P2SH) transactions, that now allows many possibilities with various complex redeem paths. In a P2SH transaction the locking script is always of the following form: 
+\begin{lstlisting}[frame=single]
+scriptPubKey: OP_HASH160 <20 bytes hash of the redeem script> OP_EQUAL
+\end{lstlisting}
+Such a construction enables huge possibilities: in summary, it is not anymore a locking script of the type "pay to a person able to provide ownership of the private key corresponding to this address", but more generally of the kind "pay to a person validating a script whose hash is this".
+For a better understanding we will exemplifies the behaviour of P2SH using the previous multi-signature transaction.
+We have:
+\begin{lstlisting}[frame=single]
+Redeem script: m <pubKey1> <pubKey2> ... <pubKeyn> n OP_CHECKMULTISIG
+Locking script: OP_HASH160 <20 bytes hash of the redeem script> OP_EQUAL
+Unlocking script: 0 <sig1> <sig2> ... <sigm>
+\end{lstlisting}
+Now the burden of the greater redeem script is on the receiver of the transaction, since the output is locked with the locking script, that is much lighter than the redeem script. When the receiver will finally try to spend this transaction, he will need to supply the serialization of the unlocking and of the redeem scripts: first the redeem script will be checked against the locking script to ensure that the hash matches, if this is the case then the redeem script is validated against the unlocking script.
+\\
+Once again we would like to point out that, even if P2SH was conceived in order to make multi-signature transactions more aligned with the economic incentives, they allow a huge amount of redemption script combined with Bitcoin scripting language.
