@@ -46,6 +46,8 @@ Moreover if the aggregated public key is not given to the verifier, it is still 
 \bigskip
 \noindent
 The plain public key setting plays a crucial role when trying to enable multi-signatures across multiple inputs of a Bitcoin transaction, resulting in a unique signature per transaction.  In case the transaction spends inputs from different owners, they will obviously need to collaborate to produce the multi-signature. Such a construction would reduce further the traffic on-chain, resulting in a benefit for all the network participants. Such a change would require the introduction of new opcodes in the Bitcoin scripting language, but this can be done via a soft fork (i.e. in a backward compatible way). To see why the plain public key model is fundamental to enable cross-input multi-signature, think about an attacker that identifies some outputs he want to steal, corresponding to a set $\{Q_1, Q_2, ..., Q_{n - t}\}$ of public keys. He could try to identify another set of keys $\{Q_{n - t + 1}, ..., Q_n\}$ such that he can sign for the aggregated public key. He would be able to steal the coins just by sending a small amount of his own moneys to outputs corresponding to the keys he found and finally creating a transaction with inputs the outputs he want to steal and the newly created outputs in his possession: by construction he is able to forge a signature on his own for this transaction. But the plain public key model defends exactly against such a situation, since the game is won by the adversary if he is able to forge a signature over a set of keys that includes at least one key not in possession of the attacker. 
+\\
+We have talked about cross-input aggregation, that would reduce the number of signatures to one per transaction. Is it possible to go further? For example, is it possible to obtain a single signature on a block basis? Unfortunately it is not possible through Schnorr, since as we will see the aggregation scheme, to be secure, has to be done interactively: this obviously prevents aggregation on a block level. However the discussion would not be fair if we would not point out that changing signature scheme it would become possible: for example the BLS signature scheme is non interactive when it comes to aggregation. This would enable a single signature per transaction. 
 
 \bigskip
 \noindent
@@ -137,125 +139,33 @@ To avoid this problem, each signer must ensure that whenever any $K$ value sent 
 \section{Threshold signatures}
 With the name threshold signatures we refer to policies of the kind $m$-of-$n$, where it is necessary that at least $m$ participants of the scheme decide to collaborate to produce a valid signature. This kind of policy is very popular in Bitcoin, since it is flexible and has many applications: for example, a single user could use such a policy to improve security, storing the keys on different machines, at the same time defeating the risk of loss of some keys. 
 \\
-We will analyse two possibilities to bring threshold signature schemes based on Schnorr to Bitcoin. One is more general and combines Schnorr signatures with Pedersen Secret Sharing, while the other is more Bitcoin oriented since it requires Bitcoin's scripting language and is called signatures tree.
+In this section we will study a provable secure Schnorr based threshold scheme. For the security proof we refer to \cite{RefWork:14}. The scheme is constructed on top of the Pedersen Verifiable Secret Sharing Scheme (VSSS) and Pedersen's multi-party protocol to generate a random shared secret, hence we start presenting these two schemes.
 
-\subsubsection{Tree signatures}
-Tree signatures are based on the concept of Merkle tree, a binary tree able to uniquely identify a possibly huge amount of data with a much smaller identifier, the so called Merkle root, so that it is possible to prove ownership of a piece of data to the tree with a proof that increases logarithmically with the amount of data. In the leaves of the tree are stored the hashes of the data; these hashes are then coupled (if the number of elements at the current level is odd the last one is concatenated with itself and hashed), concatenated and hashed again and this procedure is repeated until there remains a unique hash, the Merkle root of the tree. 
+\bigskip
+
+\subsection{Verifiable secret sharing scheme}
+\label{subsec:1}
+Hereinafter, we will refer to threshold signature schemes as $t$-of-$m$ schemes in order to avoid confusion in the notation.
 \\
-It follows an example of Merkle tree with eleven leaves that becomes twelve when duplicating the last one (the duplicates are highlighted in red).
+Typically, in a $t$-of-$m$ secret sharing scheme, a trusted dealer distributes a secret $s$ to $m$ players $P_1, ..., P_m$ in such a way that any subgroup of at least $t$ members can recover the secret, while any subgroup of cardinality strictly less than $t$ learns nothing about it. A verifiable secret sharing scheme moreover prevents the dealer from cheating, since each participant can verify that his share of the secret is consistent with the others. The novelty introduced by Pedersen is that his scheme is non-interactive in the verification and does not require trust between the parties involved. Still there is a trusted dealer, a figure we would like to get rid of: this will be done through the second protocol we will present in Section \ref{subsec:2}. Here follows the VSSS proposed by Pedersen.
+
+\bigskip
+\noindent
+Fix an elliptic curve over a prime finite field $E(\mathbb{F}_p)$, characterized by the EC domain parameters $T = (a, b, p, G, n, h)$ and fix another generator $H$ of the same cyclic group generated by $G$. We require that these two generators are "nothing up my sleeves" (NUMS), meaning that we do not know the discrete logarithm of one with respect to the other, and vice versa.
 \\
+Assume that the dealer has a secret value $s \in \mathbb{Z}_n$ and a number $s' \in \mathbb{Z}_n$ generated at random. He commits\footnote{A commitment scheme is a cryptographic primitive used to commit to some secret data without revealing anything about it. Commitment schemes are designed so that it is unfeasible to change the secret: when revealed in a second moment, we have probabilistic assurance that it is the real committed value. A typical example of commitment scheme is a collision resistant hash function, e.g. SHA-256.} to the couple $(s, s')$ through the so called Pedersen commitment $C_0 = sG + s'H$. The NUMS property is needed to prevent the person who commits from lying about the values he committed to. Assume indeed that the dealer knows the discrete logarithm of H with respect to G: $H = r_HG$. In this case she could write: $C_0 = sG + s'H = (s + s'r_H)G = (s \pm ar_H + s'r_H)G = (s - ar_H)G + (s'r_H + ar_H)G = (s - ar_H)G + (s' + a)H, \ \forall a \in \mathbb{Z}_n$.
 \\
+After having broadcasted the commitment, the secret $s$ can be shared among $P_1, ..., P_m$ through the following protocol:
 
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ R
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ /  \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ H$_\text{ABCDEFGH}$ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  H$_\text{ILMMILMM}$
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textbackslash\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ H$_\text{ABCD}$ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ H$_\text{EFGH}$\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ H$_\text{ILMM}$ \ \ \ \ \ \ \ \ \textcolor{red}{H$_\text{ILMM}$}
-
-\ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \ \textbackslash
-
-\ \ \ H$_\text{AB}$ \ \ \ \ \ \ \ \ \ H$_\text{CD}$ \ \ \ \ \ \ \ \ \ \ H$_\text{EF}$ \ \ \ \ \ \ \ \ \ H$_\text{GH}$ \ \ \ \ \ \ \ \ \  H$_\text{IL}$ \ \ \ \ \ \ \ \ \ H$_\text{MM}$
-
-\ \ / \ \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ / \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ / \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ /\ \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ / \ \ \textbackslash  \ \ \ \ \ \ \ \ \ / \ \ \ \textbackslash
-
-H$_\text{A}$ \ \ \ H$_\text{B}$ \ \ \ H$_\text{C}$ \ \ \ H$_\text{D}$ \ \ \ H$_\text{E}$ \ \ \ H$_\text{F}$ \ \ \ H$_\text{G}$ \ \ \ H$_\text{H}$ \ \ \ H$_\text{I}$ \ \ \ H$_\text{L}$ \ \ \ H$_\text{M}$ \ \ \ \textcolor{red}{H$_\text{M}$}
-\\
-\\
-Now we would like to exemplify the proof of ownership of the data associated to the leaf H$_\text{F}$. In order to do it we need what is called a Merkle proof, that, in this specific case, consists of the nodes  $\{\text{H}_\text{E}, \ \text{H}_\text{GH}, \ \text{H}_\text{ABCD}, \ \text{H}_\text{ILMMILMM}\}$ and of the piece of data F. Given the Merkle proof the validation proceed as follows:
-\begin{itemize}
-	\item Take F and compute hash(F) = H$_\text{F}$;
-	\item Take H$_\text{E}$, concatenate it with H$_\text{F}$ and compute hash(H$_\text{E} \ || \ \text{H}_\text{F}$) = H$_\text{EF}$;
-	\item Take H$_\text{GH}$ from the Merkle proof and compute hash(H$_\text{EF} \ || \ \text{H}_\text{GH}$) = H$_\text{EFGH}$; 
-	\item Take H$_\text{ABCD}$ and compute hash($\text{H}_\text{ABCD} \ || \ \text{H}_\text{EFGH}$) = H$_\text{ABCDEFGH}$;
-	\item Finally, the Merkle root is compared with hash(H$_\text{ABCDEFGH} \ || \ \text{H}_\text{ILMMILMM}$). If the two values coincide we have the assurance that the hash value correspondent to the data F belongs to the tree.
-\end{itemize}
-The path of the proof is showed in the following figure, where in blue it is presented the Merkle proof and in red the proof of membership:
-\\
-\\
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{red}{R}
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ /  \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{red}{H$_\text{ABCDEFGH}$} \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  \textcolor{blue}{H$_\text{ILMMILMM}$}
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textbackslash\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ \textcolor{blue}{H$_\text{ABCD}$} \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{red}{H$_\text{EFGH}$} \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ H$_\text{ILMM}$ \ \ \ \ \ \ \ \ H$_\text{ILMM}$
-
-\ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \ \textbackslash
-
-\ \ \ H$_\text{AB}$ \ \ \ \ \ \ \ \ \ H$_\text{CD}$ \ \ \ \ \ \ \ \ \ \ \textcolor{red}{H$_\text{EF}$} \ \ \ \ \ \ \ \ \ \textcolor{blue}{H$_\text{GH}$} \ \ \ \ \ \ \ \ \  H$_\text{IL}$ \ \ \ \ \ \ \ \ \ H$_\text{MM}$
-
-\ \ / \ \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ / \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ / \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ /\ \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ / \ \ \textbackslash  \ \ \ \ \ \ \ \ \ / \ \ \ \textbackslash
-
-H$_\text{A}$ \ \ \ H$_\text{B}$ \ \ \ H$_\text{C}$ \ \ \ H$_\text{D}$ \ \ \ \textcolor{blue}{H$_\text{E}$} \ \ \ \textcolor{red}{H$_\text{F}$} \ \ \ H$_\text{G}$ \ \ \ H$_\text{H}$ \ \ \ H$_\text{I}$ \ \ \ H$_\text{L}$ \ \ \ H$_\text{M}$ \ \ \ H$_\text{M}$
-\\
-\\
-In order to implement the procedure a good idea could be to associate to each node a boolean value to assess whether it is a right or left child of the upper level node.
-\\
-This idea can go further relying on the Bitcoin scripting language: it is possible to associate to each leaf a different redeem script. Then, thanks to the Merkle proof, only the redemption script that is actually used to spend the bitcoins goes on the blockchain, while all the others are hidden. This approach leads to the so called MASTs (Merkleized Abstract Syntax Trees), that could lead a great improvement in privacy. But now let's get back to the combination of tree signatures with Schnorr.
-\\
-\\
-To bring an $m$-of-$n$ policy through Schnorr we could associate to each leaf of the Merkle tree an $m$-of-$m$ Schnorr public key (the aggregated key): the number of the leaves would be ${n\choose m}$, the number of ways, disregarding the order, in which $m$ signers can be chosen from $n$ participants.
-\\
-For example, think of a 3-of-4 policy. Denoting the set of signers as \{A, B, C, D\}, the possibilities to produce a valid signature are the following: \{A, B, C\}, \{A, B, D\}, \{A, C, D\} and \{B, C, D\}. We would need to compute the four aggregated public keys P$_\text{ABC}$, P$_\text{ABD}$, P$_\text{ACD}$ and P$_\text{BCD}$. Then the four associated hash values become the leaves of a Merkle tree:
-\\
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ R
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textbackslash
-
-\ \ \ \ \ \ \ \ \ \ \ \ \ H$_1$ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ H$_2$
-
-\ \ \ \ \ \ \ / \ \ \ \ \ \ \ \ \ \ \ \textbackslash \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ / \ \ \ \ \ \ \ \ \ \ \ \textbackslash
-
-H$_\text{ABC}$ \ \ \ \ \ \ \ \ \ \ \ \ \ H$_\text{ABD}$ \ \ \ \ \ \ \ \ \ \ \ \ \ H$_\text{ACD}$ \ \ \ \ \ \ \ \ \ \ \ \ \ H$_\text{BCD}$
-\\
-\\
-The root R would lock the output of a transaction. To spend the associated bitcoins it would be necessary to provide a Merkle proof and a signature valid for the chosen aggregated key. Assuming that the signers are A, B and D, the Merkle proof consists of $\{\text{P}_\text{ABD}, \ \text{H}_\text{ABC}, \ \text{H}_2\}$, while the actual redeem script in Bitcoin scripting language would comprehend the four public keys. Although the privacy benefits is obvious (one aggregated public key instead of the four public keys), it may not be obvious that also from the point of view of the efficiency this approach would bring some benefits. This is linked with the fact that the actual implementation of the threshold signature in Bitcoin scales linearly in the number of participants (the public keys of all the participants would be necessary), while the Merkle proof is logarithmic in the number of combinations (the number of leaves). Moreover, while this approach would require only one expensive CHECKSIG operation, the standard Bitcoin approach requires a CHECKSIG operation per signer.
-\\
-Looking back to the desirable properties of a multi-signature scheme, we could say that this approach satisfies them all: it is private, usable and accountable, since the participant are able to recognize the signers, having to store the whole tree. However it has some downsides: it is feasible only when the number of leaves is not too big, although this is a problem only for the participants, since the verifiers see only the Merkle proof. Another major problem is linked to the fact that the participants have to pre-compute the keys associated to every combination. This problem could be avoided if, instead of the aggregated key, in the leaves we put the hash associated to the concatenation of the public keys. This means that the unlocking script contains as usual the Merkle proof and a signature, but now the Merkle proof embeds the whole set of public keys used to compute the signature, giving up privacy. In the end it is up to the verifier the computation of the aggregated public key needed for the verification of the signature. Moreover, even if the Merkle proof has always size $log_2$$n\choose m$, this method is linear in $m$ for what concerns the unlocking script since there is the need for the set of public keys of all the signers.
-\\
-Other benefit provided by the tree signatures approach is that it is very generic, since it works for any subset of combinations of keys. The privacy improvement is so remarkable since from the outside the policy is not even recognizable: indeed adding dummies has a very low cost.
-
-\subsubsection{Pedersen secret sharing}
-In this section we will give a look to another construction that allows to build Schnorr based threshold signature schemes. The scheme that will be analysed is provably secure, meaning that it can be shown to be as secure as the Schnorr signature itself. For the security proof we refer to [8]. This scheme is constructed on top of the Pedersen Verifiable Secret Sharing Scheme (VSSS) and Pedersen's multi-party protocol to generate a random shared secret, hence we start the section presenting these two schemes.
-
-\paragraph{8.2.2.1 \ Verifiable secret sharing scheme}
-Typically, in an $m$-of-$n$ secret sharing scheme, a trusted dealer distributes a secret $s$ to $n$ players $P_1, ..., P_n$ in such a way that any subgroup of at least $m$ members can recover the secret, while any subgroup of cardinality strictly less than $m$ learns nothing about it. A verifiable secret sharing scheme moreover prevents the dealer from cheating, since each participant can verify that his share of the secret is consistent with the others. The novelty introduced by Pedersen is that his scheme is not interactive in the verification and does not require trust between the parties involved. Still there is a trusted dealer, a figure we would like to get rid of: this will be done in a while. Here follows the VSSS proposed by Pedersen.
-\\
-\\
-Fix an elliptic curve over a prime finite field $E(\mathbb{F}_p)$, characterized by the EC domain parameters $T = (a, b, p, G, n, h)$ and fix another generator $H$ of the same cyclic group generated by $G$. We require that these two generators are "nothing up my sleeves" (NUMS), meaning that we do not know the discrete logarithm of one with respect to the other, and vice versa (this property is required by the Pedersen commitment, see below).
-\\
-Assume that the dealer has a secret value $s \in \mathbb{Z}_p$ and a number $s' \in \mathbb{Z}_p$ generated at random. He commits to the couple $(s, s')$ through the so called Pedersen commitment $C_0 = sG + s'H$\footnote{Loosely speaking a commitment scheme is a cryptographic primitive that allows one to commit to a chosen value while keeping it hidden to others, with the ability to reveal the committed value later, but without the possibility of lying about it.}. The NUMS property is needed to prevent the person who commits from lying about the values he committed to. Assume indeed that the dealer knows the discrete logarithm of H with respect to G: $H = r_HG$. In this case she could write: $C_0 = sG + s'H = (s + s'r_H)G = (s \pm ar_H + s'r_H)G = (s - ar_H)G + (s'r_H + ar_H)G = (s - ar_H)G + (s' + a)H, \ \forall a \in \mathbb{Z}_n$.
-\\
-After having broadcasted the commitment, the secret $s$ can be shared among $P_1, ..., P_n$ through the following protocol:
-\\
-\\
+\bigskip
+\noindent
 {\bf The dealer}:
 \begin{enumerate}
 	\item Chooses a couple of random polynomials of degree $t - 1$: 
 	$$f(u) = s + f_1u + ... + f_{t - 1}u^{t - 1}, \ f'(u) = s' + f'_1u + ... + f'_{t - 1}u^{t - 1},$$
-	where $s \ \text{and} \ s'$ are the committed values, while $f_i, f'_i \in \mathbb{F}_p$ are randomly chosen for every $i \in \{1, ..., t - 1\}$;
-	\item Computes $(s_i, s'_i) = (f(i), f'(i))$ for $i \in \{1, ..., n\}$;
-	\item Sends secretly $(s_i, s'_i)$ to $P_i, \forall i \in \{1, ..., n\}$;
+	where $s \ \text{and} \ s'$ are the committed values, while $f_i, f'_i \in \mathbb{Z}_n$ are randomly chosen for every $i \in \{1, ..., t - 1\}$;
+	\item Computes $(s_i, s'_i) = (f(i), f'(i))$ for $i \in \{1, ..., m\}$;
+	\item Sends secretly $(s_i, s'_i)$ to $P_i, \forall i \in \{1, ..., m\}$;
 	\item Broadcasts the values $C_j = f_jG + f'_jH, \ \forall j \in \{1, ..., t - 1\}$.
 \end{enumerate}
 
@@ -267,61 +177,63 @@ After having broadcasted the commitment, the secret $s$ can be shared among $P_1
 	\item Verifies the consistency of its share of the secret as:
 	$$s_iG + s'_iH = \sum_{j = 0}^{t - 1}i^jC_j.$$
 	If this check fails he broadcasts a compliant against the dealer;
-	\item For each compliant from a player $i$, the dealer defends himself by broadcasting the values $(s_i, s'_i) = (f_i, f'_i)$ that satisfies the checking equation at point 1;
+	\item For each compliant from a player $i$, the dealer defends himself by broadcasting the values $(s_i, s'_i) = (f(i), f'(i))$ that satisfies the checking equation at point 1;
 	\item Aborts the protocol if:
 	\begin{itemize}
 		\item The dealer received more than $t$ compliants in step 1;
 		\item She answered to a compliant in step 2 with values that violates again the checking equation.
 	\end{itemize}
 \end{enumerate}
-Pedersen proved that any coalition of less than $t$ players cannot get any information about the shared secret, provided that the discrete logarithm in $E(\mathbb{F}_p)$ is hard\footnote{This is important since we are not adding cryptographic assumptions.}. For the proof we refer to the original paper [\textit{Non-Interactive and Information-Theoretic Secure Verifiable Secret Sharing} by Torben Pryds Pedersen]. Although we do not look at the proof, it may still be of interest to check why the verification procedure should succeed:
+Pedersen proved that any coalition of less than $t$ players cannot get any information about the shared secret, provided that the discrete logarithm in $E(\mathbb{F}_p)$ is hard\footnote{This is important since we are not adding cryptographic assumptions.}. For the proof we refer to the original paper \cite{RefWork:13}. Although we do not look at the proof, it may still be of interest to check why the verification procedure should succeed:
 $$s_iG+ s'_iH = f(i)G + f'(i)H = \sum_{j = 0}^{t- 1}f_ji^jG + \sum_{j = 0}^{t - 1}f'_ji^jH =$$
 $$ \sum_{j = 0}^{t - 1}i^j(f_jG + f'_jH)= \sum_{j = 0}^{t - 1}i^jC_j.$$
 We used the convention that $f_0 = s$ and $f'_0 = s'$. Remembering that $C_0$ commits to the secret and that the other $C_j$ commits to the polynomials, we have the assurance that the dealer is not cheating. Indeed there is one and only one polynomial of degree at most $t - 1$ satisfying $f(i) = s_i$, respectively $f'(i) = s'_i$, for $t$ values of $i$. 
 \\
-This is also the key property that allows the reconstruction of the secret value from any group $\mathcal{P}$ of $t$ participants. Indeed the members in $\mathcal{P}$ can recover the polynomial $f$ through the Lagrange's interpolation formula, that given a set of $t$ points $(i, s_i = f(i))$ returns the lowest degree polynomial (in this case a $t - 1$ degree polynomial) that in each value $i$ assumes the value $s_i$:
-$$f(u) = \sum_{i \in \mathcal{P}}f(i)\omega_i(u), \ \text{where} \ \omega_i(u) = \prod_{j \in \mathcal{P}, \ j \neq i}\frac{u - j}{i - j} \ (\text{mod} \ p).$$
+This is also the key property that allows the reconstruction of the secret value from any group $\mathcal{P}$ of $t$ participants. Indeed the members in $\mathcal{P}$ can recover the polynomial $f$ through the Lagrange's interpolation formula, that given a set of $t$ points $(i, s_i = f(i))$ returns the lowest degree polynomial (in this case a $t - 1$ degree polynomial) that satisfies $f(i) = s_i$:
+$$f(u) = \sum_{i \in \mathcal{P}}f(i)\omega_i(u), \ \text{where} \ \omega_i(u) = \prod_{j \in \mathcal{P}, \ j \neq i}\frac{u - j}{i - j} \ (\text{mod} \ n).$$
 Since it holds that $s = f(0)$ by definition, the group $\mathcal{P}$ can directly reconstruct the secret as:
-$$s = f(0) = \sum_{i \in \mathcal{P}}f(i)\omega_i,  \ \text{where} \ \omega_i = \omega_i(0) = \prod_{j \in \mathcal{P}, \ j \neq i}\frac{j}{j - i} \ (\text{mod} \ p).$$
+$$s = f(0) = \sum_{i \in \mathcal{P}}f(i)\omega_i,  \ \text{where} \ \omega_i = \omega_i(0) = \prod_{j \in \mathcal{P}, \ j \neq i}\frac{j}{j - i} \ (\text{mod} \ n).$$
 
 \bigskip
 
-\paragraph{8.2.2.2 \ Protocol for the generation of a random shared secret}
-For the key generation phase of the signature scheme it is necessary to generate a random shared secret key in a distributed way. Thus we need to get rid of the trusted dealer. This can be done relying on the following protocol:
+\subsection{Protocol for the generation of a random shared secret}
+\label{subsec:2}
+As we pointed out before, we would like to get rid of the trusted dealer, so that it is possible to generate the key between distrustful parties. The key generation phase of the signature scheme generates a random shared secret key in a distributed way according to the following protocol:
 \\
 \\
 {\bf Each participant $P_i$}:
 \begin{enumerate}
-	\item Chooses $r_i, r'_i \in \mathbb{Z}_n$ at random and verifiably shares $(r_i, r'_i)$ acting as the dealer according to the Pedersen's VSSS described above. Let the sharing polynomials of participant $i$ be $f_i(u) = \sum_{j = 0}^{t - 1}a_{ij}u^j$, $f'_i(u) = \sum_{j= 0}^{t - 1}a'_{ij}u^j$, where $a_{i0} = r_i$ and $a'_{i0} = r'_i$. The public commitments are $C_{im} = a_{im}G + a'_{im}H$ for $m \in \{0, ..., t - 1\}$;
+	\item Chooses $r_i, r'_i \in \mathbb{Z}_n$ at random and verifiably shares $(r_i, r'_i)$ acting as the dealer according to the Pedersen's VSSS described above. Let the sharing polynomials of participant $i$ be $f_i(u) = \sum_{j = 0}^{t - 1}a_{ij}u^j$, $f'_i(u) = \sum_{j= 0}^{t - 1}a'_{ij}u^j$, where $a_{i0} = r_i$ and $a'_{i0} = r'_i$. The public commitments are $C_{ik} = a_{ik}G + a'_{ik}H$ for $k \in \{0, ..., t - 1\}$;
 	\item Sets $H_0 = \{P_j \ | \ P_j \ \text{is not detected to be cheating at step 1}\}$. The distributed secret value $r$ is equal to $\sum_{i \in H_0}r_i$. Each participant $P_i$ sets his share of the secret at $s_i= \sum_{j \in H_0}f_j(i) \ (\text{mod} \ n)$ and set the value $s'_i = \sum_{j \in H_0}f'_j(i) \ (\text{mod} \ n)$.
-	\item Each player in $H_0$ broadcasts $Y_i = r_iG$ via Feldman's VSSS:
+	\item Each player in $H_0$ broadcasts $R_i = r_iG$ via Feldman's VSSS:
 	\begin{enumerate}
 		\item Each player $P_i$ in $H_0$ broadcasts $A_{ik} = a_{ik}G$ for $k \in \{0, ..., t - 1\}$;
-		\item Each player $P_j$ verifies the values broadcasted by the other players in $H_0$: for each $P_i \in H_0$, $P_j$ checks:
+		\item Each player $P_j$ verifies the values broadcast by the other players in $H_0$: for each $P_i \in H_0$, $P_j$ checks:
 		$$f_i(j)G = \sum_{k = 0}^{t - 1} j^kA_{ik}.$$
-		If the check fails for an index $i$, $P_j$ complaints against $P_i$ broadcasting the values $(f_i(j), f'_i(j)$ that satisfy the checking equation of the Pedersen's VSSS but not the one at point (b);
-		\item For players $P_i$ who received at least one valid complaint, the other players run the reconstruction phase of Pedersen's VSSS to compute $r_i$, $f_i(u)$ and $A_{ik}$ for $k \in \{0, ..., t - 1\}$. All participants in $H_0$ set $Y_i = r_iG$. 
+		If the check fails for an index $i$, $P_j$ complaints against $P_i$ broadcasting the values $(f_i(j), f'_i(j))$ that satisfy the checking equation of the Pedersen's VSSS but not the one at point (b);
+		\item For players $P_i$ who received at least one valid complaint, the other players run the reconstruction phase of Pedersen's VSSS to compute $r_i$, $f_i(u)$ and $A_{ik}$ for $k \in \{0, ..., t - 1\}$. All participants in $H_0$ set $R_i = r_iG$. 
 	\end{enumerate} 
 \end{enumerate}
 After the execution of the protocol the following equations hold:
-$$Y = \sum_{i \in H_0} Y_i = \sum_{i \in H_0}r_iG = rG,$$
+$$R = \sum_{i \in H_0} R_i = \sum_{i \in H_0}r_iG = rG,$$
 $$f(u) = \sum_{i \in H_0} f_i(u) = r + a_1u + ... + a_{t - 1}u^{t - 1}, \ \text{where} \ a_i = \sum_{j \in H_0}a_{ji},$$
 $$f(i) = s_i.$$
 We introduce the following notation: 
-$$(s_1, ..., s_n) \xleftrightarrow{\text{(t, n)}} (r|Y, a_iG, H_0), \ i \in \{1, ..., t - 1\}.$$
+$$(s_1, ..., s_n) \xleftrightarrow{\text{(t, m)}} (r|R, a_iG, H_0), \ i \in \{1, ..., t - 1\}.$$
 It means that $s_j$ is the share of secret key $r$ belonging to $P_j$ for $j \in H_0$. The values $a_iG$
-are the public commitments of the sharing polynomials $f(u)$ and $(r, Y)$ is the key pair that can be reconstructed by any subgroup of $H_0$ composed of at least $t$ participants. 
+are the public commitments of the sharing polynomials $f(u)$ and $(r, R)$ is the key pair that can be reconstructed by any subgroup of $H_0$ composed of at least $t$ participants. 
 \\
 Before we pass to analyse the actual signature scheme, let's give a look at the checking equation at point (b) in the previous protocol.
 $$f_i(j)G = \sum_{k = 0}^{t - 1}a_{ik}j^kG = \sum_{k = 0}^{t - 1}j^kA_{ik}.$$
 
-\paragraph{8.2.2.3 \ Threshold signature scheme}
-Now that we have defined the primitives on which it is built, we can discuss the protocol that implements the $t$-of-$n$ threshold signature scheme. 
-\\
-\\
-{\bf Key generation}: All $n$ participants have to cooperate to generate a public key $Y$ and a share of the secret key for each participant $P_j$. This can be done relying on the protocol presented in the previous paragraph named {\bf Protocol for the generation of a random shared secret}. The output of the protocol is:
-$$(\alpha_1, ..., \alpha_n) \xleftrightarrow{\text{(t, n)}} (x|Y, b_iG, H_0), \ i \in \{1, ..., t - 1\}.$$
-The $\alpha$ values denote the secret key share belonging to $P_j$. They will be used to generate a partial signature for the key pair $(x, Y)$.
+\subsection{Threshold signature scheme}
+Now that we have defined the primitives on which it is built, we can finally discuss the protocol that implements the $t$-of-$m$ threshold signature scheme. 
+
+\bigskip
+\noindent
+{\bf Key generation}: All $m$ participants have to cooperate to generate a public key $X$ and a share of the secret key for each participant $P_j$. This can be done relying on the protocol presented in Section \ref{subsec:2}. The output of the protocol is:
+$$(\alpha_1, ..., \alpha_n) \xleftrightarrow{\text{(t, m)}} (x|X, b_iG, H_0), \ i \in \{1, ..., t - 1\}.$$
+The $\alpha$ values denote the secret key share belonging to $P_j$. They will be used to generate a partial signature for the key pair $(x, X)$.
 \\
 \\
 {\bf Signing algorithm}: Let $m$ denote the message to be signed. Suppose that a subset $H_1 \subseteq H_0$ wants to issue a signature. The members of $H_1$ proceed as follows:
