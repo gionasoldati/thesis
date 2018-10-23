@@ -52,12 +52,18 @@ Now that we have talked about the setup procedure we can give a closer look to t
 	\label{alg:ecdsa_sig}
 	\begin{algorithmic}[1]
 		\Procedure{ecdsa\_sig}{$M, \ q$}
-		\State $m \gets \text{hash}(\text{bytes}(M))$
-		\State Let $z$ be the $L_n$\footnote{$L_n$ is the bit length of the group order $n$. This step can be avoided if the function hash is chosen coherently with the dimension of the curve. This is the case of Bitcoin, where is it used the hash function SHA-256, that outputs in the space of string of length 256 bits and it is used the secp256k1 curve, meaning that the order of the curve is about $2^{256}$.} leftmost bits of $m$. $z \gets \text{int}(z)$
+		\State $m \gets \text{hash}(M)$
+		\State Let $z$ be the $L_n$ leftmost bits of $m$: $z \gets \text{int}(z)$
 		\State $k \xleftarrow{\text{\$}} [1, ..., n - 1]$
 		\State $K = kG = (x_K, y_K)$
-		\State $r = x_K \ (\text{mod} \ n)$. If $r = 0$ go back to step 4
-		\State $s = k^{-1}(z + rq_A) \ (\text{mod} \ n)$. If $s = 0$ go back to step 4
+		\State $r = x_K \ (\text{mod} \ n)$
+		\If {$r = 0$}
+		\State \textbf{go to} step 4
+		\EndIf 
+		\State $s = k^{-1}(z + rq_A) \ (\text{mod} \ n)$
+		\If {$s = 0$}
+		\State \textbf{go to} step 4
+		\EndIf
 		\State \textbf{return} $(\text{bytes}(r), \text{bytes}(s))$
 		\EndProcedure
 	\end{algorithmic}
@@ -74,8 +80,8 @@ Now that we have talked about the setup procedure we can give a closer look to t
 		\If {$r \notin [1, ..., n - 1]$ or $s \notin [1, ..., n - 1]$}
 		\State \textbf{return} {\bf False}
 		\EndIf
-		\State $m \gets \text{hash}(\text{bytes}(M))$
-		\State Let $z$ be the $L_n$ leftmost bits of $m$. $z \gets \text{int}(z)$
+		\State $m \gets \text{hash}(M)$
+		\State Let $z$ be the $L_n$ leftmost bits of $m$: $z \gets \text{int}(z)$
 		\State $u_1 \gets zs^{-1} \ (\text{mod} \ n)$, $u_2 \gets zrs^{-1} \ (\text{mod} \ n)$
 		\State $K \gets u_1G + u_2Q_A$
 		\If {$K = \infty$}
@@ -155,9 +161,12 @@ Given an ECDSA signature $(r, s)$ and EC domain parameters $T$, it is generally 
 		\State $r \gets \text{int}(r), \ s \gets \text{int}(s)$
 		\For {$j \gets 0, h - 1$}
 		\State $x \gets r + jn$
-		\State $K \gets \text{EC\_point}(x)$. If $K = {\bf False}$ or $nK \neq \infty$ go back to step 3
-		\State $m = \text{hash}(\text{bytes}(M))$
-		\State Let $z$ be the $L_n$ leftmost bits of $m$. $z \gets \text{int}(z)$
+		\State $K \gets \text{EC\_point}(x)$. 
+		\If {$K = {\bf False}$ or $nK \neq \infty$}
+		\State \textbf{go to} step 3
+		\EndIf
+		\State $m = \text{hash}(M)$
+		\State Let $z$ be the $L_n$ leftmost bits of $m$: $z \gets \text{int}(z)$
 		\For {$k \gets 1,2$}
 		\State $Q \gets r^{-1}(sK - zG)$
 		\State $keys \gets keys + Q$
@@ -244,7 +253,7 @@ Hereinafter hash is the SHA-256 function and the elliptic curve on which everyth
 	\label{alg:schnorr_sig}
 	\begin{algorithmic}[1]
 		\Procedure{schnorr\_sig}{$M, \ q$}
-		\State $m \gets \text{hash}(\text{bytes}(M))$
+		\State $m \gets \text{hash}(M)$
 		\State $k \gets \text{int}(\text{hash}(\text{bytes}(q) \ || \ m)) \ (\text{mod} \ n)$
 		\State $K \gets kG$
 		\If {$\text{jacobi}(y_K) \neq 1$}
@@ -268,14 +277,14 @@ $$k = s_0 - e_0q = s_1 - e_1q\ (\text{mod} \ n) \ \Longrightarrow \ q = (s_0 - s
 	\label{alg:schnorr_ver}
 	\begin{algorithmic}[1]
 		\Procedure{schnorr\_ver}{$(r, s), M, Q$}
-		\If {not $\text{isOnCurve}(Q)$ or $Q = \infty$}
+		\If {not $\text{is\_on\_curve}(Q)$ or $Q = \infty$}
 		\State \textbf{return False}
 		\EndIf 
 		\State $r \gets \text{int}(r)$, $s \gets \text{int}(s)$
 		\If {$r \notin [1, ..., p - 1]$ or $s \notin [1, ..., n - 1]$}
 		\State \textbf{return False}
 		\EndIf
-		\State $m \gets \text{hash}(\text{bytes}(M))$
+		\State $m \gets \text{hash}(M)$
 		\State $e \gets \text{int}(\text{hash}(\text{bytes}(r) \ || \ \text{bytes}(Q) \ || \ m) \ (\text{mod} \ n)$
 		\State $K \gets sG - eQ$
 		\If {$K = \infty$ or $\text{jacobi}(y_K) \neq 1$ or $x_K \neq r$}
@@ -328,7 +337,7 @@ We remark the fact that the algorithm, taken from the BIP, is constructed to wor
 		\State $RHS \gets \infty$
 		\State $mult \gets 0$
 		\For {$i \gets 1,u$}
-		\If {not isOnCurve$(Q_i)$ or $Q_i = \infty$}
+		\If {not is\_on\_curve$(Q_i)$ or $Q_i = \infty$}
 		\State \textbf{return False}
 		\EndIf
 		\State $r_i \gets \text{int}(r_i)$, $s_i \gets \text{int}(s_i)$

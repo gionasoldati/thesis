@@ -1,110 +1,140 @@
-\chapter{Schnorr's application}
+\chapter{Schnorr's applications}
 \label{chpr:application}
-In this chapter we will present some of the applications that Schnorr would make deployable in Bitcoin: mostly they are intended to adapt utilities already present in Bitcoin, such as multi-signatures and threshold signatures. 
+In this chapter we will present some of the applications that Schnorr would make deployable in Bitcoin: mostly they are intended to adapt utilities already present in Bitcoin, such as multi-signatures and threshold signatures. Then we will give a look to adaptor signatures, a tool that would enable better implementations of layer two solution and cross-chain atomic swaps.
 
 \bigskip
 
 \section{Multi-signature: MuSig ($\mu \Sigma$)}
-Usually Schnorr is presented with an implicit multi-signature scheme: given $n$ users that want to sign a single message $m$, they can sign it on their own, the final signature being the sum of the so called partial signatures. This signature can then be verified against the sum of the public keys. An appealing property of this scheme is non-interactivity.
+Usually Schnorr is presented with an implicit multi-signature scheme: given $n$ users that want to sign a single message $m$, they can sign it on their own, the final signature being the sum of the so called partial signatures. This signature can then be verified against the sum of the public keys.
 \\
-Let's study it through an example: Alice and Bob have the key pairs $(q_A, Q_A)$ and $(q_B, Q_B)$, respectively. If both participants are honest, they will proceed as follows: they exchange their public keys, computing the aggregated one $Q = Q_A + Q_B$. Then each one of them proceed as usual, producing $K_A$ and $K_B$ and defining $K = K_A + K_B$, after having exchanged also the public nonces. The signature would then be $(K, s)$, with $s = s_A + s_B = k_A + \text{hash}(K \ || \ Q \ || \ m)q_A + k_B + \text{hash}(K \ || \ Q \ || \ m)q_B \ (\text{mod} \ n)= (k_A + k_B) + \text{hash}(K \ || \ Q \ || \ m)(q_A + q_B) \ (\text{mod} \ n)$. Verification would require: $sG = K + \text{hash}(K \ || \ Q \ || \ m)Q$, just as usual.
+Let's study it through an example: Alice and Bob have the key pairs $(q_A, Q_A)$ and $(q_B, Q_B)$, respectively. If both participants are honest, they will proceed as follows: they exchange their public keys, computing the aggregated one $Q = Q_A + Q_B$. Then each one of them proceed as usual, producing $K_A$ and $K_B$ and defining $K = K_A + K_B$, after having exchanged also the public nonces. The signature would then be $(K, s)$, with $s = s_A + s_B = k_A + \text{hash}(K \ || \ Q \ || \ m)q_A + k_B + \text{hash}(K \ || \ Q \ || \ m)q_B \ (\text{mod} \ n)= (k_A + k_B) + \text{hash}(K \ || \ Q \ || \ m)(q_A + q_B) \ (\text{mod} \ n)$. Verification would require: $sG = K + \text{hash}(K \ || \ Q \ || \ m)Q$, just as usual. Third parties would not be able to recognize that this is indeed a multi-signature.
 \\
-This sounds great, except for the fact that it is a completely insecure scheme: we assumed that both the participants were honest, a deadly hypothesis for every cryptosystem. Imagine that it is Bob that wants to cheat. He could simply says that its public key is $Q_B' = Q_B - Q_A$. Then, if someone sends money to the address associated to $Q = Q_A + Q_B' = Q_A + Q_B - Q_A = Q_B$, clearly Bob can control the funds by himself, being in possess of the associated private key.
+This sounds great, except for the fact that it is a completely insecure scheme: we assumed that both the participants were honest, a deadly hypothesis for every cryptosystem. Imagine that it is Bob that wants to cheat. He could simply says that his public key is $Q_B' = Q_B - Q_A$. Then, if someone sends money to the address associated to $Q = Q_A + Q_B' = Q_A + Q_B - Q_A = Q_B$, clearly Bob can control the funds by himself, being in possess of the associated private key.
 \\
 This kind of attack is called rogue key attack and is a serious concern for multi-signature schemes: given $n$ participants, a subset of $1 \leq t < n$ dishonest signers use public keys that are functions of the public keys of honest signers, allowing them to forge a signature without the aid of the honest signers for the whole set of public keys. There are certain ways to prevent such an attack: for example by ensuring that the participants own the private keys associated with the alleged public keys (now it is not possible for Bob to cheat, since it would imply breaking the ECDLP), a setting that takes the name of KOSK (knowledge of secret key). 
 
 \bigskip
 \noindent
-In this section we will present a provably secure multi-signature scheme of the type $n$-of-$n$. But before delving into its technicalities, it could be better to give a look into the future: deploying innovations in Bitcoin is a long procedure, due to its decentralized consensus protocol. Since it could take years to take a new feature to it, we should think about properties that would enhance Bitcoin in the long term. Today Bitcoin is missing some important properties in order to be a good method of payment: it is missing both fungibility\footnote{Fungibility is the property of a good whose individual units are interchangeable.} and privacy. It is missing fungibility due to the fact that it is missing privacy: Bitcoin is pseudonymous, not anonymous, in the sense that an address is not directly linked to a physical person, but every single transaction is on the public  ledger open to (possibly) every node in the network. Low privacy means that bitcoins, not being interchangeable, could be treated differently: think about the bitcoins possessed by the creator of Bitcoin, Satoshi Nakamoto, and not moved since the creation of Bitcoin. Obviously they have not the same appeal of newly minted coins.
+In this section we will present a provably secure multi-signature scheme of the type $n$-of-$n$. But before delving into its technicalities, it could be better to stop and talk a little about how changes are introduced in Bitcoin: deploying innovations in Bitcoin is a long procedure, due to its decentralized consensus protocol. Since it could require years to take a new feature to it, we should think about properties that would enhance Bitcoin in the long term. Today Bitcoin is missing some important properties in order to be a good method of payment: it is missing both fungibility\footnote{Fungibility is the property of a good whose individual units are interchangeable.} and privacy. It is missing fungibility due to the fact that it is missing privacy: Bitcoin is pseudonymous, not anonymous, in the sense that an address is not directly linked to a physical person, but every single transaction is on the public  ledger open to (possibly) every node in the network. Low privacy means that bitcoins, not being interchangeable, could be treated differently: think about the bitcoins possessed by the creator of Bitcoin, Satoshi Nakamoto, and not moved since the creation of Bitcoin. Obviously they have not the same appeal of newly minted coins.
 \\
-Fortunately enough, the lack of some properties is not everlasting: for such a reason, when introducing a new feature in Bitcoin we should try to fix these problems. So, we will give now a look to some properties that, in a long term view, a new multi-signature scheme should have.
+Fortunately enough, the lack of some properties is not everlasting: for such a reason, when introducing a new feature in Bitcoin we should try to fix these problems. So, we will give now a look to some properties that, in a long term view, a new multi-signature scheme should possess:
 \begin{enumerate}
 	\item Accountability: this property refers to $m$-of-$n$ multi-signature schemes (also referred to as threshold schemes) and deals with the fact that for the participants of the scheme should be possible to know who signed and to show to others that they have not;
 	\item Usability: the ease of use is important. If an interactive scheme requires a huge number of rounds, it won't be used by anyone;
 	\item Privacy: third parties should learn as little about the policy of the scheme as possible (particular kind of policies could identify your transactions, leading to various problems, like censorship by miners).
 \end{enumerate}
 
-\subsection{MuSig ($\mu \Sigma$)}
-Up to now we have talked a lot about multi-signature schemes, but we have not seen what they are in detail. With this term we refer to a mathematical scheme that allows to $n$ participants to cooperate to sign a single message $m$. Verification usually requires the message $m$ and the set of public keys of the signers.
-\\
-Formally, we have that a multi-signature algorithm is a triplet of algorithms $(KeyGen, Sign, Ver)$. To sign jointly a document or message $m$, then each participant $i$ of the scheme should proceed as follows:
-\begin{itemize}
-	\item She generates a public key pair through the key generation algorithm: $(d_i, P_i) = KeyGen()$;
-	\item She sends her public key to all the other participants, so that every user can gather the same multiset $L$ of public keys: $L = \{P_1, P_2, ..., P_n\}$;
-	\item She runs the signing algorithm on message $m$, secret key $s_i$ and multiset of public key $L$: $\sigma = Sign(m, d_i, L)$;
-	\item A verifier can check the validity of the signature through the verification algorithm: $Ver(\sigma, m, L) \in \{0, 1\}$. If the signature scheme returns 1 then the signature is valid, otherwise it is not.
-\end{itemize}
-A proper multi-signature scheme should output to every signer the same signature $\sigma$ that satisfies the following consistency equation: $Ver(Sign(m, d_i, L), m, L) = 1$, for every secret key $d_i$ associated with a public key $P_i$ in $L$.
-\\
-It is easy, given a signature scheme, to create the multisig equivalent in a naive way: each signer signs the message with its own private key, the final signature being the concatenation of the partial signatures. This is the approach used today in Bitcoin with ECDSA: the problem is that the signature size increase linearly in the number of participants. Ideally, the size of the signature should be independent of the number of participants.
-\\
-\\
-MuSig is an interactive (meaning that the scheme comprehends different rounds of communication) multi-signature scheme, based on Schnorr signature. MuSig has some very attractive properties, namely:
+\bigskip
+\noindent
+After having discussed partially the reasons behind its creation, we present now the MuSig scheme \cite{RefWork:11}. MuSig is an interactive (meaning that the scheme comprehends different rounds of communication between the participants) multi-signature scheme, based on Schnorr signature. MuSig has some very attractive properties, namely:
 \begin{itemize}
 	\item The size of the signature is equal to the single user case;
 	\item It is provably secure in the plain public key model\footnote{The signers are only required to have a public key: they do not have to prove ownership of it, i.e. knowledge of the associated private key.};
 \end{itemize}
-These properties, although being appealing, are not original: MuSig shares them with others scheme, in particular with the Bellare-Neven (BN) multisig scheme. The novelty introduced by the authors is that they recovered key aggregation, meaning that to the scheme can be associated a unique joint public key, leading to a verification algorithm that is equal to the single user case: the multi-signature can be verified with respect to a single aggregated public key, leading to greater privacy. 
+These properties, although being appealing, are not original: MuSig shares them with others scheme, in particular with the Bellare-Neven (BN) scheme \cite{RefWork:10}. The novelty introduced by the authors is that they recovered key aggregation, meaning that to the scheme can be associated a unique joint public key, leading to a verification algorithm that is equal to the single user case: the multi-signature can be verified with respect to a single aggregated public key, leading to greater privacy. 
 \\
-The Bellare-Neven scheme prevents rogue key attacks relying on a particular algorithm to compute the partial signatures, avoiding a trusted setup: $s_i = k_i + c_id_i, \ c_i = \text{hash}(\langle L \rangle\ || \ P_i \ || \ R \ || \ m)$, where $R = \sum_{i = 1}^{n}R_i$, $m$ is the message to be signed, $P_i$ the public key of the $i$-th participant and $\langle L \rangle$ a unique encoding of the multiset of public keys $L = \{P_1, P_2, ..., P_n\}$. The verification equation then becomes: $sG = R + \sum_{i = 1}^{n}c_iP_i, \ s = \sum_{i = 1}^{n}s_i$. We can think about MuSig as a variant of BN that recovers key aggregation: indeed, from the verification equation we can see that BN requires the entire multiset of public keys. The setting in which the two schemes are defined is the same: both can be proven to be secure in the plain public key model under the discrete logarithm assumption\footnote{The discrete logarithm assumption requires the DL to be hard on the selected group. This means that if the DL is hard, then the scheme is secure.}, modeling the hash functions involved as a public random oracle\footnote{In the random oracle model, hash functions are substituted with a black box that responds in random way to every unique query. Moreover, these random oracles are publicly accessible.}.  
+The Bellare-Neven scheme prevents rogue key attacks relying on a particular algorithm to compute the partial signatures, avoiding a trusted setup: each participant $i \in \{1, ..., n\}$ computes $s_i = k_i + c_iq_i, \ c_i = \text{hash}(\langle L \rangle\ || \ Q_i \ || \ K \ || \ m)$, where $K = \sum_{i = 1}^{n}K_i$, $m$ is the message to be signed, $Q_i = q_iG$ the public keys and $\langle L \rangle$ a unique encoding of the multiset of public keys $L = \{Q_1, Q_2, ..., Q_n\}$. The verification equation then becomes: $sG = K + \sum_{i = 1}^{n}c_iQ_i, \ s = \sum_{i = 1}^{n}s_i$. We can clearly notice that a validator needs the whole set of public keys in order to check the signature. 
+\\
+We can think about MuSig as a variant of BN that recovers key aggregation. The setting in which the two schemes are defined is the same: both can be proven to be secure in the plain public key model under the discrete logarithm assumption\footnote{The discrete logarithm assumption requires the DL to be hard on the selected group. This means that if the DL is hard, then the scheme is secure.}, modeling the hash functions involved as a public random oracle.
 \\
 Security is to be intended in the sense that it is infeasible for an adversary to forge multi-signatures involving at least an honest participant, that is: the adversary is not able to produce on its own a signature valid for the set of public keys containing the one of the honest signer.
 \\
-We stress the fact that, from the applicative point of view, key aggregation is a fundamental property: if the scheme is usable (few interactive rounds), then we get for free privacy and accountability (MuSig is an $n$-of-$n$ scheme, so that it is possible to generate a valid signature only if all the participants agree). Indeed, thanks to key aggregation, verifiers will only see an aggregated public key $\tilde{P}$: they wouldn't even know that it is indeed aggregate, since it is indistinguishable from a normal public key. This is also important from the point of view of efficiency: in Bitcoin every single node has the possibility of validating each transaction. This means that verification efficiency and signature size are very important, more than the timing of the signing algorithm. This is why, although there are multisig schemes with fewer interaction rounds, we prefer MuSig: the benefits of key aggregation are improved bandwidth (no need for communication of multiple public keys), privacy (aggregated public key indistinguishable from a normal one) and validation efficiency (as efficient as a normal Schnorr's verification, slightly faster than the ECDSA case).
+We stress the fact that, from the applicative point of view, key aggregation is a fundamental property: if the scheme is usable (few interaction rounds), then we get for free privacy and accountability (MuSig is an $n$-of-$n$ scheme, so that it is possible to generate a valid signature only if all the participants agree). Indeed, thanks to key aggregation, verifiers will only see an aggregated public key: they wouldn't even know that it is indeed aggregate, since it is indistinguishable from a normal public key. This is also important from the point of view of efficiency: in Bitcoin every single node has the possibility of validating each transaction, meaning that verification efficiency and signature size are very important, more than the timing of the signing algorithm. This is why, although there are multisig schemes with fewer interaction rounds, MuSig is generally preferred: the benefits of key aggregation are improved bandwidth (no need for communication of multiple public keys), privacy (aggregated public key indistinguishable from a normal one) and validation efficiency (as efficient as a normal Schnorr's verification, slightly faster than the ECDSA case).
 \\
 Moreover if the aggregated public key is not given to the verifier, it is still possible to recover it just from the set of public keys of the participant, without interaction with the signers.
-\\
-\\
-The plain public key setting plays a crucial role when trying to enable multi-signatures across multiple inputs of a Bitcoin transaction. Indeed, MuSig can go beyond what we have seen at input level, where it reduces the signatures number to one per input: it is possible to go further and get a single signature per transaction. Citing directly the original paper, doing so would require a change in the verification procedure of the expandability of UTXO, since the validity of separate inputs is no longer independent, thus the outputs locking scripts cannot be modeled as predicates in this case. We can think of them as functions returning a boolean value and a set of zero or more public keys. The validity of the transaction requires all returned boolean values to be true and a multi-signature of the transaction with $L$ to be the union of the returned keys. The amazing fact is that this can be implemented in a backward compatible way providing an alternative to the signature checking opcode OP\_CHECKSIG and related opcodes in the Bitcoin scripting language. Instead of returning the result of an actual ECDSA verification, they always return true, but additionally add the public key with which the verification would have taken place to a transaction-wide multiset of keys. Finally, after all inputs are verified, a multi-signature present in the transaction is verified against that multiset. In case the transaction spends inputs from multiple owners, they will need to collaborate to produce the multi-signature, or choose to only use the original opcodes. 
-\\
-To see why the plain public key model is fundamental think about an attacker that identifies some outputs he want to steal, corresponding to a set $\{P_1, P_2, ..., P_{n - t}\}$ of public keys. Then he could try to identify another set of keys $\{P_{n - t + 1}, ..., P_n\}$ such that he can sign for the aggregated public key $\tilde{P}$. He would be able to steal the coins just by sending a small amount of his own moneys to outputs corresponding to the keys he found and finally creating a transaction with inputs the outputs he want to steal and the newly created outputs in his possession: by construction he is able to forge a signature on his own for this transaction. 
-\\
-In the case of multi-signatures across inputs, theft can occur by being able to forge a signature over a set of keys that includes at least one key not controlled by the attacker: this is exactly what the plain public key model considers a win for the attacker.
-\\
-\\
-Now we will see in general the description of MuSig. The scheme is parameterized by the cyclic group $\mathbb{G}$ denoted in additive notation, its order $n$, a generator of the group $G$ and three hash functions $H_{com}, \ H_{agg}$ and $H_{sign}$: $\{0, 1\}^* \to \{0, 1\}^l$. The bit length of the order $n$ is denoted by $l$ and assumed to be a security parameter.
-\\
-\\
-{\bf Key Generation}: Each participant of the scheme generates a random private key $d \in \mathbb{Z}_n$ and computes  the corresponding public key $P = dG$.
-\\
-\\
-{\bf Signing algorithm}:  We split the signing algorithm accordingly to the interaction rounds of the scheme.
-\begin{enumerate}
-	\item Let $(d_1, P_1)$ be the key pair of a specific signer, let $m$ be the message to be signed, let $P_2, P_3, ..., P_n$ be the public keys of the other cosigners and let $\langle L \rangle$ be a unique encoding of the multiset of public keys $L = \{P_1, P_2, ..., P_n\}$: the indices are local references to cosigners. For $i \in \{1, 2,..., n\}$ the signer computes: 
-	$$a_i = H_{agg}(\langle L \rangle, P_i).$$
-	and then the aggregated public key $\tilde{P} = \sum_{i = 1}^{n}a_iP_i$. Then the signer generates a random $k_1 \in \mathbb{Z}_n$, computes $R_1 = k_1G$, $t_1 = H_{comm}(R_1)$ and sends $t_1$ to all other cosigners.
-	\item Upon reception of the commitments $t_2, \ t_3, ..., \ t_n$ from other cosigners, the signer sends $R_1$. 
-	\item Upon reception of $R_2, \ R_3, ..., \ R_n$ from other cosigners, it checks that $t_i = H_{comm}(R_i), \ \forall i \in \{2, ..., n\}$ and aborts the protocol if this is not the case; otherwise, he computes:
-	$$R = \sum_{i = 1}^{n}R_i,$$
-	$$c = H_{sig}(\tilde{P}, R, m),$$
-	$$s_1 = k_1 + ca_1d_1 \ (\text{mod} \ n).$$
-	Then he sends $s_1$ to all other cosigners.
-	\item Finally, upon reception of $s_2, s_3, ..., s_n$ from other cosigners, the signer can compute $s = \sum_{i = 1}^{n}s_i \ (\text{mod} \ n)$. The signature is $(R, s)$.
-\end{enumerate}
 
 \bigskip
 \noindent
-{\bf Verification algorithm}: Given a multiset of public keys $L = \{P_1, P_2, ..., P_n\}$, a message $m$ and a signature $\sigma = (R, s)$, the verifier computes $a_i = H_{agg}(\langle L \rangle, P_i)$ for $i \in \{1, 2, ..., n\}$, $\tilde{P} = \sum_{i = 1}^{n} a_iP_i$ and $c = H_{sig}(\tilde{P}, R, m)$. Then he accepts the signature if $sG = R + \sum_{i = 1}^{n}ca_iP_i = R + c\tilde{P}$. 
-\\
-\\
-{\bf Proof of correctness}: We have to prove that $sG = R + c\tilde{P}$.
-\\
-$$sG = \left(\sum_{i = 1}^{n} s_i\right)G = \left(\sum_{i = 1}^{n}(k_i + ca_id_i)\right)G = \sum_{i = 1}^{n}(k_iG + ca_id_iG) =$$
-$$= \sum_{i = 1}^{n}k_iG + \sum_{i = 1}^{n} ca_id_iG = \sum_{i = 1}^{n}R_i + c\sum_{i  = 1}^{n}a_iP_i = R + c\tilde{P}.$$
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $\square$
-\\
-\\
-For the security proof we refer to [5]. Here the verification algorithm is constructed getting as input the multiset of public keys $L$. To improve both efficiency and privacy it is immediate to modify it in order to take as input the aggregate signature $\tilde{P}$, simply by relying on the standard Schnorr verification algorithm.
-\\
-We have seen in the single user case that there was the possibility to derandomize the signature algorithm without loss of security, by generating the random nonce $k$ through a deterministic function. This is done since pseudo random generation is one of the major sources of problems in cryptography. But in the multi user setting it is necessary to ensure to use different random values when the other signers change their $R$ values in repeated signing attempts, otherwise secret key recovery would be possible. We show this referring to an example coming from [5]: assume Alice and Bob have key pairs $(d_A, P_A)$ and $(d_B, P_B)$, respectively. They want to jointly produce a signature. Alice generates $k_A$ and sends $R_A = k_AG$ to Bob. In a first attempt, Bob responds with $R_B$. Alice then computes:
-$$R = R_A + R_B,$$
-$$c = H_{sig}(\tilde{P}, R, m),$$
-$$s_A = k_A + ca_Ad_A \ (\text{mod} \ n),$$
-and sends $s_A$ to Bob. Bob is trying to cheat on Alice, and decides not to produce a valid $s_B$, and thus the protocol fails. A new signing attempt takes place, and Alice again sends the same $R_A$. Bob responds with $R_B' \neq R_B$. Alice compute $c' = H_{sig}(\tilde{P}, R_AR_B', m)$ and $s_A' = k_A + c'a_Ad_A \ (\text{mod} \ n)$ and sends $s_A'$ to Bob. Now Bob is able to derive Alice's private key:
-$$s_A - s_A' = (c - c')a_Ad_A \ (\text{mod} \ n) \ \Longrightarrow \ d_A = (c - c')^{-1}a_A^{-1}(s_A - s_A') \ (\text{mod} \ n).$$
-To avoid this problem, each signer must ensure that whenever any $R$ value sent by other cosigners or the message $m$ changes, his $k_i$ changes as well. 
+The plain public key setting plays a crucial role when trying to enable multi-signatures across multiple inputs of a Bitcoin transaction, resulting in a unique signature per transaction.  In case the transaction spends inputs from different owners, they will obviously need to collaborate to produce the multi-signature. Such a construction would reduce further the traffic on-chain, resulting in a benefit for all the network participants. Such a change would require the introduction of new opcodes in the Bitcoin scripting language, but this can be done via a soft fork (i.e. in a backward compatible way). To see why the plain public key model is fundamental to enable cross-input multi-signature, think about an attacker that identifies some outputs he want to steal, corresponding to a set $\{Q_1, Q_2, ..., Q_{n - t}\}$ of public keys. He could try to identify another set of keys $\{Q_{n - t + 1}, ..., Q_n\}$ such that he can sign for the aggregated public key. He would be able to steal the coins just by sending a small amount of his own moneys to outputs corresponding to the keys he found and finally creating a transaction with inputs the outputs he want to steal and the newly created outputs in his possession: by construction he is able to forge a signature on his own for this transaction. But the plain public key model defends exactly against such a situation, since the game is won by the adversary if he is able to forge a signature over a set of keys that includes at least one key not in possession of the attacker. 
 
-\subsection{Threshold signatures}
+\bigskip
+\noindent
+Now we can finally look at the inner working of the scheme: it is parameterized by the cyclic group $\mathbb{G}$ denoted in additive notation, its order $n$, a generator of the group $G$ and three hash functions $H_{com}, \ H_{agg}$ and $H_{sign}$: $\{0, 1\}^* \to \{0, 1\}^{L_n}$. The bit length of the order $n$ is denoted by $L_n$ and assumed to be a security parameter. The key generation algorithm is not presented: we assume each participant $i \in \{1, ..., m\}$ is in possession of a proper key pair $\{q_i, Q_i\}$. The signing algorithm and the verification algorithm are presented respectively in Algorithms \ref{alg:musig_sig} and \ref{alg:musig_ver}. In the following $\langle L \rangle$ denotes a unique encoding of the multiset of public keys and the indices used in the signing algorithm are local references to the other cosigners. Moreover Algorithm \ref{alg:musig_sig} is split in interactive rounds according to the \textbf{send} and \textbf{upon reception of} commands.
+
+\bigskip
+
+\begin{algorithm}
+	\caption{MuSig: signing algorithm}
+	\label{alg:musig_sig}
+	\begin{algorithmic}[1]
+		\Procedure{MuSig\_sig}{$M, q_1, \{Q_2, ..., Q_m\}$}
+		\State $m \gets \text{hash}(M)$
+		\State $\langle L \rangle \gets \{q_1G, Q_2, ..., Q_m\}$
+		\For {$i \gets 1, m$}
+		\State $a_i \gets \text{int}(H_{agg}(\langle L \rangle \ || \ \text{bytes}(Q_i)))$
+		\EndFor
+		\State $Q \gets \sum_{i = 1}^{m}a_iQ_i$
+		\State $k_1 \xleftarrow{\text{\$}} [1, ..., m - 1]$
+		\State $K_1 \gets k_1G, \ t_1 \gets H_{comm}(\text{bytes}(K_1))$
+		\State \textbf{send} $t_1$
+		\State \textbf{upon reception of} $t_2, ..., t_m$ \textbf{send} $K_1$
+		\State \textbf{upon reception of} $K_2, ..., K_m$ \textbf{do}
+		\State $\ \ \ \ \ $ \textbf{for} $i \gets 2, m$ \textbf{do}
+		\State $\ \ \ \ \ \ \ \ \ \ $ \textbf{if} $t_i \neq H_{comm}(\text{bytes}(K_i))$ \textbf{do}
+		\State $\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $ \textbf{abort}
+		\State $\ \ \ \ \ \ \ \ \ \ $ \textbf{end if}
+		\State $\ \ \ \ \ $ \textbf{end for} 
+		\State $K \gets \sum_{i = 1}^{m}K_i$
+		\State $c \gets \text{int}(H_{sig}(\text{bytes}(Q) \ || \ \text{bytes}(K) \ || \ m))$
+		\State $s_1 \gets k_1\ + ca_1q_1 \ (\text{mod} \ n)$
+		\State \textbf{send} $s_1$
+		\State \textbf{upon reception of} $s_2, ..., s_m$ \textbf{do}
+		\State $s \gets \sum_{i = 1}^{m}s_i \ (\text{mod} \ n)$
+		\State \textbf{return} $(K, s)$
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+\bigskip
+
+\begin{algorithm}
+	\caption{MuSig: verification algorithm}
+	\label{alg:musig_ver}
+	\begin{algorithmic}[1]
+		\Procedure{MuSig\_ver}{$L, M, (K, s)$}
+		\State $m \gets \text{hash}(M)$
+		\For {$i \gets 1, m$}
+		\State $a_i \gets \text{int}(H_{agg}(\langle L \rangle \ || \ \text{bytes}(Q_i)))$
+		\EndFor
+		\State $Q \gets \sum_{i = 1}^{m}a_iQ_i$
+		\State $c \gets \text{int}(H_{sig}(\text{bytets}(Q) \ || \ \text{bytes}(K) \ || \ m))$
+		\If {$sG = K + cQ$}
+		\State \textbf{return True}
+		\EndIf
+		\State \textbf{return False}
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+\bigskip
+\noindent
+{\bf Proof of correctness}: We have to prove that $sG = K + cQ$.
+\\
+$$sG = \left(\sum_{i = 1}^{m} s_i\right)G = \left(\sum_{i = 1}^{m}(k_i + ca_iq_i)\right)G = \sum_{i = 1}^{m}(k_iG + ca_iq_iG) =$$
+$$= \sum_{i = 1}^{m}k_iG + \sum_{i = 1}^{n} ca_iq_iG = \sum_{i = 1}^{m}K_i + c\sum_{i  = 1}^{m}a_iQ_i = K + cQ.$$
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $\square$
+
+\bigskip
+\noindent
+For the security proof of the scheme we refer to the original paper \cite{RefWork:11}. The algorithms presented come directly from there: if implemented in Bitcoin according to the deployment of Schnorr suggested in \cite{RefWork:5} they would need to be adapted: however, since the BIP is under review by the community and far from being implemented, we do not proceed with it. 
+\\
+The verification algorithm is constructed getting as input the multiset of public keys $L$. To improve both efficiency and privacy it is immediate to modify it in order to take as input the aggregate key, simply by relying on the standard Schnorr verification algorithm.
+\\
+Dealing with ECDSA and Schnorr in chapter \ref{chpr:dss}, we have seen that in the single user setting there was the possibility to derandomize the signature algorithm without loss of security, by generating the random nonce $k$ through a deterministic function. This is done since pseudo random generation is one of the major sources of problems in cryptography. This is not anymore suggested in the multi-user setting: it is necessary to ensure to use different random values when the other signers change their $K$ values in repeated signing attempts, otherwise secret key recovery would be possible. 
+\\
+Here follows an example taken from \cite{RefWork:11}: assume Alice and Bob have key pairs $(q_A, Q_A)$ and $(q_B, Q_B)$, respectively. They want to jointly produce a signature. Alice generates $k_A$ and sends $K_A = k_AG$ to Bob. In a first attempt, Bob responds with $K_B$. Alice then computes:
+$$K = K_A + K_B,$$
+$$c = H_{sig}(Q \ || \ K \ || \ m),$$
+$$s_A = k_A + ca_Aq_A \ (\text{mod} \ n),$$
+and sends $s_A$ to Bob. Bob is trying to cheat on Alice, and decides not to produce a valid $s_B$, and thus the protocol fails. A new signing attempt takes place, and Alice again sends the same $K_A$. Bob responds with $K_B' \neq K_B$. Alice then computes $c' = H_{sig}(Q \ || \ K_A + K_B' \ || \ m)$ and $s_A' = k_A + c'a_Aq_A \ (\text{mod} \ n)$ and sends $s_A'$ to Bob. Now Bob is able to derive Alice's private key:
+$$s_A - s_A' = (c - c')a_Aq_A \ (\text{mod} \ n) \ \Longrightarrow \ q_A = (c - c')^{-1}a_A^{-1}(s_A - s_A') \ (\text{mod} \ n).$$
+To avoid this problem, each signer must ensure that whenever any $K$ value sent by other cosigners or the message $m$ changes, his $k_i$ changes as well. 
+
+\bigskip
+
+\bigskip
+
+\section{Threshold signatures}
 With the name threshold signatures we refer to policies of the kind $m$-of-$n$, where it is necessary that at least $m$ participants of the scheme decide to collaborate to produce a valid signature. This kind of policy is very popular in Bitcoin, since it is flexible and has many applications: for example, a single user could use such a policy to improve security, storing the keys on different machines, at the same time defeating the risk of loss of some keys. 
 \\
 We will analyse two possibilities to bring threshold signature schemes based on Schnorr to Bitcoin. One is more general and combines Schnorr signatures with Pedersen Secret Sharing, while the other is more Bitcoin oriented since it requires Bitcoin's scripting language and is called signatures tree.
