@@ -232,38 +232,49 @@ Now that we have defined the primitives on which it is built, we can finally dis
 \bigskip
 \noindent
 {\bf Key generation}: All $m$ participants have to cooperate to generate a public key $X$ and a share of the secret key for each participant $P_j$. This can be done relying on the protocol presented in Section \ref{subsec:2}. The output of the protocol is:
-$$(\alpha_1, ..., \alpha_n) \xleftrightarrow{\text{(t, m)}} (x|X, b_iG, H_0), \ i \in \{1, ..., t - 1\}.$$
-The $\alpha$ values denote the secret key share belonging to $P_j$. They will be used to generate a partial signature for the key pair $(x, X)$.
+$$(\alpha_1, ..., \alpha_n) \xleftrightarrow{\text{(t, m)}} (q|Q, b_iG, H_0), \ i \in \{1, ..., t - 1\}.$$
+The $\alpha$ values denote the secret key share belonging to $P_j$. They will be used to generate a partial signature for the key pair $(q, Q)$.
 \\
 \\
 {\bf Signing algorithm}: Let $m$ denote the message to be signed. Suppose that a subset $H_1 \subseteq H_0$ wants to issue a signature. The members of $H_1$ proceed as follows:
 \begin{enumerate}
 	\item If $|H_1| < t$, aborts. Otherwise, the subset $H_1$ generates a random shared secret following again the protocol presented in the paragraph about the generation of a random shared secret. We denote the output as:
-	$$(\beta_1, ..., \beta_n) \xleftrightarrow{\text{(t, n)}} (e|V, c_iG, H_2), \ i \in \{1, ..., t - 1\}.$$
+	$$(\beta_1, ..., \beta_n) \xleftrightarrow{\text{(t, m)}} (k|K, c_iG, H_2), \ i \in \{1, ..., t - 1\}.$$
 	\item If $|H_2| < t$, aborts. Otherwise, each $P_i \in H_2$ reveals
-	$$\gamma_i = \beta_i + \text{hash}(V \ || \ Y \ || \ m)\alpha_i.$$
+	$$\gamma_i = \beta_i + \text{hash}(K \ || \ Q \ || \ m)\alpha_i.$$
 	\item Each $P_i \in H_2$ verifies that:
-	$$\gamma_kG = V + \sum_{j = 1}^{t - 1} c_jk^jG + \text{hash}(V \ || \ Y \ || \ m)\left(Y + \sum_{j = 1}^{t - 1}b_jk^jG\right), \ \forall k \in H_2.$$
+	$$\gamma_lG = K + \sum_{j = 1}^{t - 1} c_jl^jG + \text{hash}(K \ || \ Q \ || \ m)\left(Q + \sum_{j = 1}^{t - 1}b_jl^jG\right), \ \forall l \in H_2.$$
 	Let $H_3 = \{P_j \ | \ P_j \text{not detected to be cheating at step 3}\}$.
-	\item If $|H_3| < t$, aborts. Otherwise each $P_i \in H_3$ selects an arbitrary subset $H_4 \subseteq H_3$ with $|H_4| = t$ and computes $\sigma$ satisfying $\sigma = e + \text{hash}(V \ || \ m)x$, where:
+	\item If $|H_3| < t$, aborts. Otherwise each $P_i \in H_3$ selects an arbitrary subset $H_4 \subseteq H_3$ with $|H_4| = t$ and computes $\sigma$ satisfying $\sigma = k + \text{hash}(K \ || \ Q \ || \ m)q$, where:
 	$$\sigma = \sum_{j \in H_4}\gamma_j\omega_j, \ \text{where} \ \omega_j = \prod_{h \in H_4, \ h \neq j}\frac{h}{h - j}.$$
-	The signature is $(V, \sigma)$. To verify the signature, the same formula as in Schnorr scheme applies:
-	$$\sigma G = V + \text{hash}(V \ || \ Y \ || \ m)Y.$$
+	The signature is $(K, \sigma)$. To verify the signature, the same formula as in Schnorr scheme applies:
+	$$\sigma G = K + \text{hash}(K \ || \ Q \ || \ m)Q.$$
 \end{enumerate}
 This concludes the presentation of the protocol. Nonetheless there are some formulas that deserves greater attention.
 \begin{itemize}
 	\item Checking formula at point 3: 
-	$$\gamma_kG = (\beta_k + \text{hash}(V \ || \ Y \ || \ m)\alpha_k)G = \beta_kG + \text{hash}(V \ || \ Y \ || \ m)\alpha_kG = $$
-	$$= \left(e + \sum_{j = 1}^{t - 1}c_jk^j\right)G + \text{hash}(V \ || \ Y \ || \ m)\left(x + \sum_{j = 1}^{t - 1}b_jk^j\right)G =$$
-	$$= V + \sum_{j = 1}^{t - 1}c_jk^jG + \text{hash}(V \ || \ Y \ || \ m)\left(Y + \sum_{j = 1}^{t - 1}b_jk^jG\right).$$
-	\item Formula used to compute $\sigma$: we defined $\gamma_i = \beta_i + \text{hash}(V \ || \ Y \ || \ m)\alpha_i, \ \forall i \in H_2$. In particular the equation holds for every $i \in H_4$, with $|H_4| = t$. The $\alpha$ and $\beta$ values are defined to be the pointwise evaluation of the sharing polynomials created during the two iterations of the Pedersen protocol for the generation of a random shared secret, that we denotes by $F_1(u)$ and $F_2(u)$. These polynomials have degree $t - 1$, so that we can write:
-	$$F_3(u) = F_2(u) + \text{hash}(V \ || \ Y \ || \ m)F_1(u) \ \Longrightarrow $$
-	$$\Longrightarrow \ F_3(0) = F_2(0) + \text{hash}(V \ || \ Y \ || \ m)F_1(0) = $$
-	$$= e + \text{hash}(V \ || \ Y \ || \ m)x = \sigma.$$
+	$$\gamma_lG = (\beta_l + \text{hash}(K \ || \ Q \ || \ m)\alpha_l)G = \beta_lG + \text{hash}(K \ || \ Q \ || \ m)\alpha_lG = $$
+	$$= \left(k + \sum_{j = 1}^{t - 1}c_jl^j\right)G + \text{hash}(K \ || \ Q \ || \ m)\left(q + \sum_{j = 1}^{t - 1}b_jl^j\right)G =$$
+	$$= K + \sum_{j = 1}^{t - 1}c_jl^jG + \text{hash}(K \ || \ Q \ || \ m)\left(Q + \sum_{j = 1}^{t - 1}b_jl^jG\right).$$
+	\item Formula used to compute $\sigma$: we defined $\gamma_i = \beta_i + \text{hash}(K \ || \ Q \ || \ m)\alpha_i, \ \forall i \in H_2$. In particular the equation holds for every $i \in H_4$, with $|H_4| = t$. The $\alpha$ and $\beta$ values are defined to be the pointwise evaluation of the sharing polynomials created during the two iterations of the Pedersen protocol for the generation of a random shared secret, that we denotes by $F_1(u)$ and $F_2(u)$. These polynomials have degree $t - 1$, so that we can define:
+	$$F_3(u) = F_2(u) + \text{hash}(K \ || \ Q \ || \ m)F_1(u) \ \Longrightarrow $$
+	$$\Longrightarrow \ F_3(0) = F_2(0) + \text{hash}(K \ || \ Q \ || \ m)F_1(0) = $$
+	$$= k + \text{hash}(K \ || \ Q \ || \ m)q = \sigma.$$
 	At this point we can apply the Lagrange's interpolation formula, since we know that $F_3(u)$ satisfies by construction $F_3(i) = \gamma_i$:
 	$$F_3(u) = \sum_{j \in H_4}\gamma_j\omega_j(u), \ \text{where} \ \omega_j(u) = \prod_{h \in H_4, \ h \neq j}\frac{u - h}{j -h}.$$
 	Thus, $\sigma$ can be directly computed as:
 	$$\sigma = F_3(0) = \sum_{j \in H_4}\gamma_j\omega_j, \ \text{where} \ \omega_j = \prod_{h \in H_4, \ h \neq j}\frac{h}{h - j}.$$
-	\item Verification formula: 
 \end{itemize}
-Moreover the scheme is robust, meaning that a corrupt signer who does not follow the protocol will be detected. The validity of the $\gamma_i$ is tested at step 3.
+Notice that the scheme is robust, meaning that a corrupt signer who does not follow the protocol will be detected. The validity of the partial signatures computed at step 2 is immediately tested at step 3.
+
+\bigskip
+
+\bigskip
+\noindent
+The scheme presented is complex and cumbersome, but all the work presented happens off-chain: the Bitcoin blockchain would see a standard transaction, indistinguishable from others. Nobody could tell that it required a threshold signature.
+
+\bigskip
+
+\bigskip
+
+\section{Adaptor signatures}
