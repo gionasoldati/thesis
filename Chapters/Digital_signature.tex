@@ -39,6 +39,7 @@ A possibility to construct a signature scheme relies on the difficulty of discre
 \bigskip
 
 \section{Elliptic curve digital signature algorithm (ECDSA)}
+\label{ecdsa}
 Assume that Alice wants to sign a message $M$ and send it to Bob. The first thing to do for the parties involved is to agree on an elliptic curve determined by the set of parameters $T$ and on a cryptographically secure hash function. This function is used to get a digest from $M$: indeed, a digital signature can only sign small amounts of data. Applying a proper hash function to a message produces a digest which is small enough and that can act as digital fingerprint if the output space is large enough. Now Alice chooses a secret integer $q_A \in [1, ..., n - 1]$ (the private key) and computes her public key $Q_A = q_AG$, that sends to Bob who has to validate it (Alice shouldn't be able to repudiate the signature due to the use of an invalid public key). 
 \\
 The public key can be made public thanks to the difficulty of the ECDLP; moreover, the fact that it is public allows anyone to verify Alice's signature, constituting the non repudiation property.
@@ -187,6 +188,7 @@ Through public key recovery, the verification of a signature becomes implicit: y
 \bigskip
 
 \section{Schnorr signature algorithm}
+\label{schnorr}
 In this section we finally pass to analyse the core of the present work, following closely the recent Bitcoin Improvement Proposal by Pieter Wuille \cite{RefWork:5} on the standardization of the Schnorr signature\footnote{The BIP proposes a standardization of Schnorr but does not deal with the possible implementation in Bitcoin.}.
 \\
 As stated in the BIP, ECDSA is standardized, while the Schnorr signature, due to the presence of a patent in past years, is not. But the first one has some downsides compared to the latter over the same curve:

@@ -137,7 +137,7 @@ To avoid this problem, each signer must ensure that whenever any $K$ value sent 
 
 \bigskip
 
-\section{Threshold signatures}
+\section{Threshold signature}
 \label{threshold}
 With the name threshold signatures we refer to policies of the kind $m$-of-$n$, where it is necessary that at least $m$ participants of the scheme decide to collaborate to produce a valid signature. This kind of policy is very popular in Bitcoin, since it is flexible and has many applications: for example, a single user could use such a policy to improve security, storing the keys on different machines, at the same time defeating the risk of loss of some keys. 
 \\
@@ -281,7 +281,7 @@ The scheme presented is complex and cumbersome, but all the work presented happe
 
 \bigskip
 
-\section{Adaptor signatures}
+\section{Adaptor signature}
 \label{adaptor}
 Adaptor signatures are the building block for the so called scriptless script, an innovative idea by Andrew Poelstra: the major aim is to introduce much more flexibility in systems lacking a scripting language (e.g. the Mimblewimble protocol discussed in \cite{MW1} and \cite{MW2}). However, it turns out that these kind of signatures have a couple of interesting applications also in Bitcoin, that we are going to explore.
 \\
@@ -344,7 +344,7 @@ Adaptor signatures may not seem a big deal, but it is worth noticing that if $t$
 
 \bigskip
 
-\subsection{Atomic swaps}
+\subsection{Atomic swap}
 \label{atomic}
 In this section we look at one application of adaptor signatures, starting from the easier concept of cross-chain atomic swap. Notice that all previously seen Schnorr applications discussed in Sections \ref{musig} and \ref{threshold} can be extended outside the Bitcoin ecosystem. Atomic swaps instead are a concept strictly related to the crypto-currency world; for this reason we suggest to stop for a moment and give a look to Appendix \ref{app:A}: in there we give an overview of the role that signatures play in Bitcoin and a brief introduction to Bitcoin scripting language.
 
@@ -425,6 +425,7 @@ Notice that the efficiency achievement is impressive: we were able to condensate
 \bigskip
 
 \subsection{Lightning Network}
+\label{ln}
 The lightning network is an example of the broader concept of payment channel, an idea originally proposed by Joseph Poon and Thaddeus Dryja in \cite{RefWork:18}: the aim of this construction is to improve the well known scalability problem of Bitcoin through the so called layer 2 solutions. The name comes from the fact that they do not scale on chain\footnote{It is nearly impossible for Bitcoin to reach the transaction volume of centralized circuits like Visa: Bitcoin processes about ten transaction per second, while Visa has been able to handle a peak of 47000 tps. It means that Visa is around 5000 times better than Bitcoin in this regard: an on-chain scale would result in a bloat of the blockchain size.}, but rather suggests the implementation of other protocols to handle off-chain transactions. The blockchain is seen as a court to which it is necessary to resort only in controversial situations or to close the channel. Although other implementations have been suggested (e.g. the eltoo protocol\footnote{The lightning network enforces an honest behaviour under a threat; eltoo avoids this punitive logic enforcing the possibility to update the broadcast of an old transaction, but needs the deployment of the SIGHASH\_NOINPUT soft fork proposed in \cite{BIP5}. Moreover three transactions have to be committed to the blockchain to open and close any channel.} described in \cite{RefWork:19}), nowadays layer 2 solutions leverage the HTLC presented in Section \ref{atomic}. The idea is to create bidirectional channels between the participants that transact frequently: the lightning network can be seen as a routed path composed by these channels, in such a way that it is not necessary to open a new channel anytime two parties want to transact.
 We start presenting the basic working of the lightning network, that could be of interest on its own. Since the inner working is very similar to the one presented when dealing with atomic swaps (being the atomicity the core property to be preserved), we will give only a low level overview.
 \\

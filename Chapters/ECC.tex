@@ -5,6 +5,7 @@ In this chapter we will analyse the cryptographic primitives and assumptions tha
 \bigskip
 
 \section{Elliptic curves over finite fields}
+\label{ecoverff}
 Up to now we considered the field over which the curve is defined to be the set of real numbers: this is not at all the unique possibility. The typical choice in cryptography is $K = \mathbb{F}_p$, where $\mathbb{F}_p$ is the finite field with $p$ elements. 
 \\
 Since there are only finitely many pairs $(x, y)$ with $x, y \in \mathbb{F}_p$, the group $E(\mathbb{F}_p)$ is finite.
@@ -89,6 +90,7 @@ We implemented this approach in the library that can be found at \url{https://gi
 \bigskip
 
 \subsection{Elliptic curve domain parameters}
+\label{ecparam}
 In order to rely on ECC, the parties involved in a scheme need to agree on a set of parameters called elliptic curve domain parameters. A typical choice is to rely on standardized curves (e.g. those defined in \cite{RefWork:3}); however, it is still possible to choose other parameters, but this has to be done carefully, as we will explain in this section. We start defining EC parameters, following closely \cite{RefWork:2}.
 \\
 \\
@@ -151,6 +153,7 @@ These checks are needed to verify that: the curve has the required difficulty le
 \bigskip
 
 \subsection{Elliptic curve key pairs}
+\label{keypairs}
 In this section we would like to briefly analyse the core of the public key cryptography based on elliptic curves: the concept of elliptic curve key pairs. Shortly, public key cryptography is a cryptographic system that relies on pairs of keys, a public and a private key, with different roles. The asymmetry of the keys is the reason behind the fact that public key cryptography is sometimes called also asymmetric cryptography. We talk about asymmetry since public keys can be published, while private keys must be kept secret, as the names suggest. This accomplishes two functions: authentication, since everybody with the public key can verify that the holder of the paired private key sent a signed message, and encryption, where the public key is used for encryption, but only the owner of the private counterpart can decrypt.
 
 \bigskip
@@ -170,6 +173,7 @@ Through this algorithm we are checking that $Q$ is effectively a point on the cu
 \bigskip
 
 \subsection{The Bitcoin curve: secp256k1}
+\label{btccurve}
 Since this work is mainly focused on applications that can be deployed in Bitcoin, we would like to present the elliptic curve over a finite field used there. This could also suggest the shape of the curves used in practice.
 \\
 \\
