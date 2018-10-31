@@ -1,6 +1,6 @@
 \chapter{Mathematical background}
 \label{chpr:math}
-The present study starts with an introduction to the mathematical foundations required for its understanding. The reader that is familiar with abstract algebra and elliptic curve cryptography may skip the first chapter to deal directly with the digital signature schemes presented in Chapter \ref{chpr:dss}.
+The present study starts with an introduction to the mathematical foundations required for its understanding. The reader that is familiar with abstract algebra and elliptic curve cryptography may skip the first two chapters to deal directly with the digital signature schemes presented in Chapter \ref{chpr:dss}.
 \\
 We start with a brief presentation of the group and field's structures, deferring the introduction to elliptic curves mathematics to the second section.
 
@@ -18,6 +18,7 @@ We start with a brief presentation of the group and field's structures, deferrin
 	\end{itemize}
 \end{mydef}
 \label{def1}
+\noindent
 As a careful reader may have noticed, it is not required the property of commutativity. This means that, in general, the result of the operation may depend on the order of the operands. If this is not the case, meaning that the group operation is also commutative, the group is called abelian.
 \\
 Consider now a group $(G, +)$: hereinafter we will stick with the additive notation.
@@ -55,8 +56,8 @@ More precisely we can give the following definition.
 \begin{mydef} {\bf (Field)}: A field is a set $K \neq \emptyset$ endowed with two binary operations $+$ and $*$, such that:
 \begin{itemize}
 	\item $(K, +)$ is an abelian group, whose identity element is denoted by 0. This group is called the additive group of the field;
-	\item $(K \text{\textbackslash}\{0\}, *)$ is an abelian group. This is called the multiplicative group of the field, sometimes denoted by $K^{\times}$ or by $K^*$;
-	\item $\forall a \in K \text{\textbackslash} \{0\}, \ \forall b, c: \ a * (b + c) = a * b + a * c$. 
+	\item $(K \text{\textbackslash}\{0\}, *)$ is an abelian group. It is called the multiplicative group of the field, sometimes denoted by $K^{\times}$ or by $K^*$;
+	\item $\forall a \in K \text{\textbackslash} \{0\}, \ \forall b, c \in K: \ a * (b + c) = a * b + a * c$. 
 \end{itemize}
 \end{mydef}
 
@@ -64,14 +65,14 @@ More precisely we can give the following definition.
 \noindent
 Another key role in the following will be played by finite fields: a finite field is simply a field with a finite number of elements. It can be shown that a finite field of order $q$, denoted as $\mathbb{F}_q$, exists if and only if $q = p^k$, where $p$ is a prime number and $k$ is a positive integer. The field of a given order is unique, up to an isomorphism (this means that there are different representations of a unique mathematical object). In a field of order $p^k$, the characteristic of the field (as defined below) is $p$: thus adding $p$ copies of any element results in the additive identity. 
 \\
-In particular we will deal with prime finite fields, i.e. the finite fields whose order is a prime number. Finite fields of order a prime $p$ may be represented by the set $\{0, 1, ..., p-1\}$ with addition and multiplication defined through modular arithmetic, that is: given $a, b \in \mathbb{F}_p$ then $r = a + b$ and $s = a * b$ are integers in $[0, p - 1]$, defined as the remainder of the divisions $(a + b)/p$ and $a*b/p$, respectively. This is usually written as: $a + b \equiv r \ (\text{mod} \ p)$ and $a * b \equiv s \ (\text{mod} \ p)$ or as $a + b \equiv r \ \text{in} \ \mathbb{F}_p$ and $a * b \equiv s \ \text{in} \ \mathbb{F}_p$ . It is easy to see that in this case the additive identity is the integer 0, while the multiplicative identity is the integer 1.
+In particular we will deal with prime finite fields, i.e. the finite fields whose order is a prime number. Finite fields of order a prime $p$ may be represented by the set $\mathbb{Z}_p = \{0, 1, ..., p-1\}$ with addition and multiplication defined through modular arithmetic, that is: given $a, b \in \mathbb{F}_p$ then $r = a + b$ and $s = a * b$ are integers in $[0, p - 1]$, defined as the remainder of the divisions $(a + b)/p$ and $a*b/p$, respectively. This is usually written as: $a + b \equiv r \ (\text{mod} \ p)$ and $a * b \equiv s \ (\text{mod} \ p)$ or as $a + b \equiv r \ \text{in} \ \mathbb{F}_p$ and $a * b \equiv s \ \text{in} \ \mathbb{F}_p$ . It is easy to see that in this case the additive identity is the integer 0, while the multiplicative identity is the integer 1.
 \\
 Subtraction and division are defined via the additive and multiplicative inverses:
 \begin{itemize}
 	\item Subtraction: given $a \in \mathbb{F}_p$, we know by definition that there is a unique element $-a \in \mathbb{F}_p$ such that $a + (-a) = 0 \ (\text{mod} \ p)$. Then we define subtraction as: $a - b = a + (-b) \ (\text{mod} \ p), \ \forall a, b \in \mathbb{F}_p$;
-	\item Division: $\forall a \in \mathbb{F}_p \text{\textbackslash} \{0\}, \ \exists a^{-1} \ | \ a * a^{-1} = 1 \ (\text{mod} \ p)$, again by the definition. Thus we can defined division as: $a / b = a * (b)^{-1}, \ \forall a, b \in \mathbb{F}_p \text{\textbackslash} \{0\}$.
+	\item Division: $\forall a \in \mathbb{F}_p \text{\textbackslash} \{0\}, \ \exists a^{-1} \ | \ a * a^{-1} = 1 \ (\text{mod} \ p)$, again by definition. Thus we can defined division as: $a / b = a * (b)^{-1}, \ \forall a, b \in \mathbb{F}_p \text{\textbackslash} \{0\}$.
 \end{itemize}
-Notice that not all the finite fields $\mathbb{F}_q$ are isomorphic to $\mathbb{Z}_q$: consider for example the case $q = 2^2 = 4$. Here $p = 2$ and $k = 2$. Since two is a prime number, we have that there exists a field with four elements. But since four is not a prime number, we cannot represent this field through the set $\mathbb{Z}_4 = \{0, 1, 2, 3\}$. Consider the element two: 2 * 0 = 0 (mod 4), 2 * 1 = 2 (mod 4), 2 * 2 = 0 (mod 4), 2 * 3 = 2 (mod 4). As we can see it does not admit a multiplicative inverse in $\mathbb{Z}_4$. 
+Notice that not all the finite fields $\mathbb{F}_q$ are isomorphic to $\mathbb{Z}_q$: consider for example the case $q = 2^2 = 4$. Here $p = 2$ and $k = 2$. Since two is a prime number, we have that there exists a field with four elements. But since four is not a prime number, we cannot represent this field through the set $\mathbb{Z}_4 = \{0, 1, 2, 3\}$. Consider the element 2: 2 * 0 = 0 (mod 4), 2 * 1 = 2 (mod 4), 2 * 2 = 0 (mod 4), 2 * 3 = 2 (mod 4). As we can see it does not admit a multiplicative inverse in $\mathbb{Z}_4$. 
 
 \bigskip
 \noindent
@@ -87,11 +88,9 @@ In case this relation never holds, the field is said to have characteristic zero
 
 \bigskip
 
-\section{Introduction to elliptic curves}
+\section{Elliptic curves}
 \label{ec}
-An elliptic curve over a field $K$ is a non-singular cubic curve in two variables: it is defined by the equation $f(x, y) = 0$, where $f$ is a polynomial in $x$ and $y$ of degree three with coefficients in $K$.
-\\
-In the most general case, an elliptic curve is defined through the following equation: $y^2 + a_1xy + a_2y = x^3 + a_3x^2 + a_4x + a_5$, where $a_1, ..., a_5 \in K$. This form is called generalized Weierstrass equation, and can be simplified according to the characteristic of the field. In particular, if it is different from two and three we can write:
+In the most general case, an elliptic curve over a field $K$ is defined through the equation: $$y^2 + a_1xy + a_2y = x^3 + a_3x^2 + a_4x + a_5,$$ where $a_1, ..., a_5 \in K$. This form is called generalized Weierstrass equation, and can be simplified according to the characteristic of the field. In particular, if it is different from two and three we can write:
 $$y^2 = x^3 + ax + b, \ a, b \in K.$$
 This latter equation is called Weierstrass equation, and it is the most widely used.
 \\
@@ -104,6 +103,7 @@ To start familiarizing with elliptic curves, it could be useful to consider the 
 	\makebox[\textwidth]{\includegraphics[width=15cm, height=7cm]{Images/EC.eps}}
 	\captionof{figure}{Two examples of elliptic curves over the real numbers.}
 	\label{fig:figure1}
+	\source{\url{https://en.wikipedia.org/wiki/Elliptic_curve\#Elliptic_curves_over_the_real_numbers}.}
 \end{figure}
 \noindent
 As we can see, the elliptic curves are symmetric with respect to the $x$-axis, so that for every feasible $x$ there are two $y$ values satisfying the Weierstrass equation.
@@ -111,7 +111,7 @@ As we can see, the elliptic curves are symmetric with respect to the $x$-axis, s
 Typically the Weierstrass equation is coupled with the constraint that the discriminant of the cubic $x^3 + ax + b$ is different from zero. This is equivalent to ask that:
 $$4a^3 + 27b^2 \neq 0,$$ 
 in order to avoid multiple roots. Geometrically, this requirement means that there are no cusps, self intersections or isolated points\footnote{This requirement has also other implications: it can be shown that, without it, the elliptic curve $E_{ns}(K)$ defined over the non-singular points has an isomorphism with simpler algebraic structures, such as $K$ itself or $K^{\times}$. This problem typically arises when dealing with elliptic curves modulo composites.}. 
-We can also link the sign of the discriminant to the number of components of the curve: the real graph of a curve has two components if its discriminant is positive, and one component if it is negative, as exemplified in Figure \ref{fig:figure1}.
+We can also link the sign of the discriminant to the number of components of the curve: the real graph of a curve has two components if its discriminant is positive, and one component if it is negative, as exemplified in Figure \ref{fig:figure1} (the discriminant is $\Delta = -16(4a^3 + 27b^2)$).
 
 \bigskip
 \noindent
@@ -129,9 +129,9 @@ Finally we present the case of the equation $cy^2 = dx^3 + ax + b$ and how to tr
 
 \bigskip
 
-\section{The group law}
+\subsection{The group law}
 \label{grouplaw}
-This section is devoted to the definition of an addition operation between elements in $E(K)$: this operation turns out to be fundamental since it induces the structure of abelian group on the elliptic curve's point. Moreover, we will see why, in the definition of the curve, we had to consider the point at infinity.
+This section is devoted to the definition of the addition operation between elements in $E(K)$: this operation turns out to be fundamental since it induces the structure of abelian group on the elliptic curve's point. Moreover, we will see why, in the definition of the curve, we had to consider the point at infinity.
 \\
 In particular we will consider $K$ to be the set of real numbers, in order to give an easy graphical representation of the operation. This can be done without loss of generality, since the formulas that we will derive can be shown to be valid for every $K$ with $\text{char}(K) \neq 2, 3$. 
 
@@ -150,6 +150,7 @@ Loosely speaking we can say that:
 	\makebox[\textwidth]{\includegraphics[width=20cm, height=5cm]{Images/chord.eps}}
 	\captionof{figure}{Geometrical interpretation of the addition of EC points.}
 	\label{fig:figure2}
+	\source{\url{https://en.wikipedia.org/wiki/Elliptic_curve\#The_group_law}.}
 \end{center}
 \noindent
 In order to define properly the addition of EC points we need to consider five different cases. We start taking an elliptic curve $E$ defined by the usual equation in Weierstrass form $y^2 = x^3 + ax + b, \ a,b \in \mathbb{R}$ and two points $Q_1 = (x_1, y_1), Q_2 = (x_2, y_2) \in E$. Unless otherwise specified, we assume also that $Q_1, Q_2 \neq \infty$.
@@ -215,7 +216,7 @@ Now that we have clear in mind what does addition between EC points mean, we can
 	\item Scalar multiplication: $\forall k \in \mathbb{N}$\textbackslash$\{0\}, \ kQ = Q + Q + ... + Q$, where the addition is repeated $k - 1$ times.
 \end{itemize}
 Notice that to compute the scalar multiplication for a large $k$ it is inefficient to add $Q$ to itself repeatedly. There are several faster approaches, the simplest called the {\bf double and add algorithm}. 
-We stress this fact since, as we will see later on, scalar multiplication and its computational asymmetry are the key ingredients for elliptic curve cryptography: the fact is that it is easily computable\footnote{The double and add algorithm requires polynomial time in the number of bits $n$ representing the numbers we are dealing with, compared to the exponential time required by the naive approach; that is, assuming that the point doubling and the point addition require a constant time, we need $O(n^{\alpha}), \ \alpha > 1$ elementary operations, compared to $O(2^n)$. In particular on average it requires $n$ multiplications and $0.5 * n$  additions, since the binary expansion of a random integer has an equal number of 1’s and 0’s.}
+We stress this fact since, as we will see later on, scalar multiplication and its computational asymmetry are the key ingredients for elliptic curve cryptography: the fact is that it is easily computable\footnote{The double and add algorithm requires polynomial time in the number of bits $n$ representing the numbers we are dealing with, compared to the exponential time required by the naive approach; that is, assuming that the point doubling and the point addition require a constant time, we need $O(n^{\alpha}), \ \alpha > 1$ elementary operations, compared to $O(2^n)$. In particular on average it requires $n$ multiplications and $0.5 * n$  additions, since the binary expansion of a random integer has an equal number of 1's and 0's.}
 but its inversion, the so called discrete logarithm (DL), altough not provable to be hard, is believed to be so: this means that in general we have no efficient algorithm to compute it.
 \\
 \\
@@ -238,4 +239,4 @@ but its inversion, the so called discrete logarithm (DL), altough not provable t
 	\end{algorithmic}
 \end{algorithm}
 \noindent
-The algorithm can be further sped up through the pre-computation of a vector of multiples of $Q$: this approach is not always feasible, since the point $Q$ is not always fixed\footnote{The point $Q$ is fixed, for example, when computing the public key from a private key. For a thorough exposition of these concept we refer to the chapter on elliptic curve cryptography.}.
+The algorithm can be further sped up through the pre-computation of a vector of multiples of $Q$: this approach is not always feasible, since the point $Q$ is not always fixed\footnote{The point $Q$ is fixed, for example, when computing the public key from a private key. For a thorough exposition of these concepts we refer to Chapter \ref{chpr:ecc}.}.

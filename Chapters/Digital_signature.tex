@@ -220,8 +220,9 @@ Let's give a deeper look at how this formulation can be exploited in case of unh
 
 \begin{center}
 	\includegraphics[scale = 0.4]{Images/bip32.png}
-	\captionof{figure}{BIP32's unhardened derivation, source: \cite{RefWork:7}.}
+	\captionof{figure}{BIP32's unhardened derivation.}
 	\label{fig:bip32}
+	\source{\cite{RefWork:7}}
 \end{center}
 Now, imagine an attacker is given a valid signature $(K, s)$ for public key $Q_P$ and message $m$. Relying on the previous relation, he is able to forge a valid signature for public key $Q_C$ and for the same message $m$ as $(K, s + \text{hash}(K \ || \ m)f)$. Indeed we have:
 $$(s + \text{hash}(K \ || \ m)f)G = sG + \text{hash}(K \ || \ m)fG = $$
