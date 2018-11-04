@@ -1,6 +1,8 @@
 \chapter{Schnorr's applications}
 \label{chpr:application}
-In this chapter we will present some of the applications that Schnorr would make deployable in Bitcoin: mostly they are intended to adapt utilities already present in Bitcoin, such as multi-signatures and threshold signatures. Then we will give a look to adaptor signatures, a tool that would enable better implementations of layer two solution and cross-chain atomic swaps.
+In this chapter we will present some of the applications that Schnorr would make deployable in Bitcoin: we will study improved multi and threshold signature schemes and we will see the construction called adaptor signature, that allows the development of the so called \textit{scriptless scripts}, affecting considerably privacy and efficiency in cross-chain atomic swaps and in the Lightning Network.
+\\
+In case the reader is not familiar with Bitcoin's inner working, we recommend the reading of Appendix \ref{app:A}.
 
 \bigskip
 
@@ -8,7 +10,7 @@ In this chapter we will present some of the applications that Schnorr would make
 \label{musig}
 Usually Schnorr is presented with an implicit multi-signature scheme: given $n$ users that want to sign a single message $m$, they can sign it on their own, the final signature being the sum of the so called partial signatures. This signature can then be verified against the sum of the public keys.
 \\
-Let's study it through an example: Alice and Bob have the key pairs $(q_A, Q_A)$ and $(q_B, Q_B)$, respectively. If both participants are honest, they will proceed as follows: they exchange their public keys, computing the aggregated one $Q = Q_A + Q_B$. Then each one of them proceed as usual, producing $K_A$ and $K_B$ and defining $K = K_A + K_B$, after having exchanged also the public nonces. The signature would then be $(K, s)$, with $s = s_A + s_B = k_A + \text{hash}(K \ || \ Q \ || \ m)q_A + k_B + \text{hash}(K \ || \ Q \ || \ m)q_B \ (\text{mod} \ n)= (k_A + k_B) + \text{hash}(K \ || \ Q \ || \ m)(q_A + q_B) \ (\text{mod} \ n)$. Verification would require: $sG = K + \text{hash}(K \ || \ Q \ || \ m)Q$, just as usual. Third parties would not be able to recognize that this is indeed a multi-signature.
+Let's study this scheme through an example: Alice and Bob have key pairs $\{q_A, Q_A\}$ and $\{q_B, Q_B\}$, respectively. If both participants are honest, they will proceed as follows: they exchange their public keys, computing the aggregated one $Q = Q_A + Q_B$. Then each one of them calculate as usual the public nonces $K_A$ and $K_B$, defining the joint nonce as $K = K_A + K_B$. The signature would then be $(x_K, s)$, with $s = s_A + s_B = k_A + \text{hash}(x_K \ || \ Q \ || \ m)q_A + k_B + \text{hash}(x_K \ || \ Q \ || \ m)q_B \ (\text{mod} \ n)= (k_A + k_B) + \text{hash}(x_K \ || \ Q \ || \ m)(q_A + q_B) \ (\text{mod} \ n)$. Looking exactly as a single user signature, the verification procedure would follow Algorithm \ref{alg:schnorr_ver}.
 \\
 This sounds great, except for the fact that it is a completely insecure scheme: we assumed that both the participants were honest, a deadly hypothesis for every cryptosystem. Imagine that it is Bob that wants to cheat. He could simply says that his public key is $Q_B' = Q_B - Q_A$. Then, if someone sends money to the address associated to $Q = Q_A + Q_B' = Q_A + Q_B - Q_A = Q_B$, clearly Bob can control the funds by himself, being in possess of the associated private key.
 \\
@@ -16,7 +18,7 @@ This kind of attack is called rogue key attack and is a serious concern for mult
 
 \bigskip
 \noindent
-In this section we will present a provably secure multi-signature scheme of the type $n$-of-$n$. But before delving into its technicalities, it could be better to stop and talk a little about how changes are introduced in Bitcoin: deploying innovations in Bitcoin is a long procedure, due to its decentralized consensus protocol. Since it could require years to take a new feature to it, we should think about properties that would enhance Bitcoin in the long term. Today Bitcoin is missing some important properties in order to be a good method of payment: it is missing both fungibility\footnote{Fungibility is the property of a good whose individual units are interchangeable.} and privacy. It is missing fungibility due to the fact that it is missing privacy: Bitcoin is pseudonymous, not anonymous, in the sense that an address is not directly linked to a physical person, but every single transaction is on the public  ledger open to (possibly) every node in the network. Low privacy means that bitcoins, not being interchangeable, could be treated differently: think about the bitcoins possessed by the creator of Bitcoin, Satoshi Nakamoto, and not moved since the creation of Bitcoin. Obviously they have not the same appeal of newly minted coins.
+In this section we will present a provably secure multi-signature scheme of the type $n$-of-$n$. But before delving into its technicalities, it could be better to stop and talk a little about how changes are introduced in Bitcoin: deploying innovations in Bitcoin is a long procedure, due to its decentralized consensus protocol. Since it could require years to take a new feature to it, we should think about properties that would enhance Bitcoin in the long term. Today Bitcoin is missing some important properties in order to be a good method of payment: it is missing both fungibility and privacy. It is missing fungibility due to the fact that it is missing privacy: Bitcoin is pseudonymous, not anonymous, in the sense that an address is not directly linked to a physical person, but every single transaction is on the public  ledger open to (possibly) every node in the network. Low privacy means that bitcoins, not being interchangeable, could be treated differently: think about the bitcoins possessed by the creator of Bitcoin, Satoshi Nakamoto, and not moved since the creation of Bitcoin. Obviously they have not the same appeal of newly minted coins.
 \\
 Fortunately enough, the lack of some properties is not everlasting: for such a reason, when introducing a new feature in Bitcoin we should try to fix these problems. So, we will give now a look to some properties that, in a long term view, a new multi-signature scheme should possess:
 \begin{enumerate}
@@ -27,32 +29,34 @@ Fortunately enough, the lack of some properties is not everlasting: for such a r
 
 \bigskip
 \noindent
-After having discussed partially the reasons behind its creation, we present now the MuSig scheme \cite{RefWork:11}. MuSig is an interactive (meaning that the scheme comprehends different rounds of communication between the participants) multi-signature scheme, based on Schnorr signature. MuSig has some very attractive properties, namely:
+After having discussed partially the reasons behind its creation, we present now the MuSig scheme (\cite{RefWork:11}). MuSig is an interactive (meaning that the scheme comprehends different rounds of communication between the participants) multi-signature scheme, based on Schnorr signature. MuSig has some very attractive properties, namely:
 \begin{itemize}
 	\item The size of the signature is equal to the single user case;
 	\item It is provably secure in the plain public key model\footnote{The signers are only required to have a public key: they do not have to prove ownership of it, i.e. knowledge of the associated private key.};
 \end{itemize}
-These properties, although being appealing, are not original: MuSig shares them with others scheme, in particular with the Bellare-Neven (BN) scheme \cite{RefWork:10}. The novelty introduced by the authors is that they recovered key aggregation, meaning that to the scheme can be associated a unique joint public key, leading to a verification algorithm that is equal to the single user case: the multi-signature can be verified with respect to a single aggregated public key, leading to greater privacy. 
+These properties, although being appealing, are not original: MuSig shares them with others scheme, in particular with the Bellare-Neven scheme (BN scheme presented in \cite{RefWork:10}). The novelty introduced by the authors is that they recovered key aggregation, meaning that to the scheme can be associated a unique joint public key, leading to a verification algorithm that is equal to the single user case: the multi-signature can be verified with respect to a single aggregated public key, leading to greater privacy since for third parties the multi-signature policy is completely hidden.
 \\
-The Bellare-Neven scheme prevents rogue key attacks relying on a particular algorithm to compute the partial signatures, avoiding a trusted setup: each participant $i \in \{1, ..., n\}$ computes $s_i = k_i + c_iq_i, \ c_i = \text{hash}(\langle L \rangle\ || \ K \ || \ Q_i \ || \ m)$, where $K = \sum_{i = 1}^{n}K_i$, $m$ is the message to be signed, $Q_i = q_iG$ the public keys and $\langle L \rangle$ a unique encoding of the multiset of public keys $L = \{Q_1, Q_2, ..., Q_n\}$. The verification equation then becomes: $sG = K + \sum_{i = 1}^{n}c_iQ_i, \ s = \sum_{i = 1}^{n}s_i$. We can clearly notice that a validator needs the whole set of public keys in order to check the signature. 
+The Bellare-Neven scheme prevents rogue key attacks relying on a particular algorithm to compute the partial signatures, avoiding a trusted setup: each participant $i \in \{1, ..., n\}$ with key pair $\{q_i, Q_i\}$ computes $s_i = k_i + c_iq_i, \ c_i = \text{hash}(\langle L \rangle\ || \ K \ || \ Q_i \ || \ m)$, where $K = \sum_{i = 1}^{n}K_i$ is the aggregated public nonce, $m$ is the message to be signed and $\langle L \rangle$ is a unique encoding of the multiset of public keys $L = \{Q_1, Q_2, ..., Q_n\}$. The signature is $(K, s)$, where $s = \sum_{i = 1}^{n}s_i$, and the verification equation is: $sG = K + \sum_{i = 1}^{n}c_iQ_i$. We can notice that a validator needs the whole set of public keys in order to check the signature. 
 \\
-We can think about MuSig as a variant of BN that recovers key aggregation. The setting in which the two schemes are defined is the same: both can be proven to be secure in the plain public key model under the discrete logarithm assumption\footnote{The discrete logarithm assumption requires the DL to be hard on the selected group. This means that if the DL is hard, then the scheme is secure.}, modeling the hash functions involved as a public random oracle.
+MuSig can be thought as a variant of BN that recovers key aggregation. The setting in which the two schemes are defined is the same: both can be proven to be secure in the plain public key model under the discrete logarithm assumption\footnote{The discrete logarithm assumption requires the DL to be hard on the selected group. This means that if the DL is hard, then the scheme is secure.}, modeling the hash functions involved as a public random oracle.
 \\
 Security is to be intended in the sense that it is infeasible for an adversary to forge multi-signatures involving at least an honest participant, that is: the adversary is not able to produce on its own a signature valid for the set of public keys containing the one of the honest signer.
 \\
-We stress the fact that, from the applicative point of view, key aggregation is a fundamental property: if the scheme is usable (few interaction rounds), then we get for free privacy and accountability (MuSig is an $n$-of-$n$ scheme, so that it is possible to generate a valid signature only if all the participants agree). Indeed, thanks to key aggregation, verifiers will only see an aggregated public key: they wouldn't even know that it is indeed aggregate, since it is indistinguishable from a normal public key. This is also important from the point of view of efficiency: in Bitcoin every single node has the possibility of validating each transaction, meaning that verification efficiency and signature size are very important, more than the timing of the signing algorithm. This is why, although there are multisig schemes with fewer interaction rounds, MuSig is generally preferred: the benefits of key aggregation are improved bandwidth (no need for communication of multiple public keys), privacy (aggregated public key indistinguishable from a normal one) and validation efficiency (as efficient as a normal Schnorr's verification, slightly faster than the ECDSA case).
+We stress the fact that, from the applicative point of view, key aggregation is a fundamental property: if the scheme is usable (few interaction rounds), then we get for free privacy and accountability (MuSig is an $n$-of-$n$ scheme, so that it is possible to generate a valid signature only if all the participants agree). Indeed, thanks to key aggregation, verifiers will only see an aggregated public key: they wouldn't even know that it is indeed aggregate, since it is indistinguishable from a normal public key. This is also important from the point of view of efficiency: in Bitcoin every single node has the possibility of validating each transaction, meaning that verification efficiency and signature size are very important, more than the timing of the signing algorithm. This is why, although there are multi-signature schemes with fewer interaction rounds, we present here MuSig: the benefits of key aggregation are improved bandwidth (no need for communication of multiple public keys), privacy (aggregated public key indistinguishable from a normal one) and validation efficiency (as efficient as a normal Schnorr's verification).
 \\
 Moreover if the aggregated public key is not given to the verifier, it is still possible to recover it just from the set of public keys of the participant, without interaction with the signers.
 
 \bigskip
 \noindent
-The plain public key setting plays a crucial role when trying to enable multi-signatures across multiple inputs of a Bitcoin transaction, resulting in a unique signature per transaction.  In case the transaction spends inputs from different owners, they will obviously need to collaborate to produce the multi-signature. Such a construction would reduce further the traffic on-chain, resulting in a benefit for all the network participants. Such a change would require the introduction of new opcodes in the Bitcoin scripting language, but this can be done via a soft fork (i.e. in a backward compatible way). To see why the plain public key model is fundamental to enable cross-input multi-signature, think about an attacker that identifies some outputs he want to steal, corresponding to a set $\{Q_1, Q_2, ..., Q_{n - t}\}$ of public keys. He could try to identify another set of keys $\{Q_{n - t + 1}, ..., Q_n\}$ such that he can sign for the aggregated public key. He would be able to steal the coins just by sending a small amount of his own moneys to outputs corresponding to the keys he found and finally creating a transaction with inputs the outputs he want to steal and the newly created outputs in his possession: by construction he is able to forge a signature on his own for this transaction. But the plain public key model defends exactly against such a situation, since the game is won by the adversary if he is able to forge a signature over a set of keys that includes at least one key not in possession of the attacker. 
+The plain public key setting plays a crucial role when trying to enable multi-signatures across multiple inputs of a Bitcoin transaction, resulting in a unique signature per transaction.  In case the transaction spends inputs from different owners, they will obviously need to collaborate to produce the multi-signature. Such a construction would reduce further the traffic on-chain, resulting in a benefit for all the network participants. Such a change would require the introduction of new opcodes in the Bitcoin scripting language, but this can be done via a soft fork (i.e. in a backward compatible way). To see why security in the plain public key model is fundamental to enable cross-input multi-signature, think about an attacker that identifies some outputs he wants to steal, corresponding to a set $\{Q_1, Q_2, ..., Q_{n - t}\}$ of public keys. He could try to identify another set of keys $\{Q_{n - t + 1}, ..., Q_n\}$ such that he can sign for the aggregated public key. He would be able to steal the coins just by sending a small amount of his own money to outputs corresponding to the keys he found and finally creating a transaction referencing the outputs he wants to steal and the newly created outputs in his possession: by construction he is able to forge a signature on his own for this transaction. But the plain public key model defends exactly against such a situation, since the game is won by the adversary if he is able to forge a signature over a set of keys that includes at least one key not in possession of the attacker. 
 \\
-We have talked about cross-input aggregation, that would reduce the number of signatures to one per transaction. Is it possible to go further? For example, is it possible to obtain a single signature on a block basis? Unfortunately it is not possible through Schnorr, since as we will see the aggregation scheme, to be secure, has to be done interactively: this obviously prevents aggregation on a block level. However the discussion would not be fair if we would not point out that changing signature scheme it would become possible: for example the BLS signature scheme (\cite{RefWork:15}, \cite{RefWork:16}) is non interactive when it comes to aggregation. This would enable a single signature per transaction. 
+In the setting of signature aggregation on a transaction basis, it is possible to resort to other signature schemes than MuSig (in particular the older and more reviewed BN scheme), since all the public keys involved are public.
+\\
+Up to now we have talked about cross-input aggregation, that would reduce the number of signatures to one per transaction. Is it possible to go further? For example, is it possible to obtain a single signature on a block basis? Unfortunately it is not possible through MuSig, since the scheme is interactive: this obviously prevents aggregation on a block level. However the discussion would not be fair if we would not point out that changing signature scheme would allow aggregation on a block basis: for example the BLS signature scheme (\cite{RefWork:15}, \cite{RefWork:16}) is non interactive when it comes to aggregation. This would enable a single signature per transaction. However, although there is interest around BLS signature, it is underpinned by a different cryptographic hypothesis than ECDSA and Schnorr. For this reason the Bitcoin community is working towards the implementation of Schnorr.
 
 \bigskip
 \noindent
-Now we can finally look at the inner working of the scheme: it is parameterized by the cyclic group $\mathbb{G}$ denoted in additive notation, its order $n$, a generator of the group $G$ and three hash functions $H_{com}, \ H_{agg}$ and $H_{sign}$: $\{0, 1\}^* \to \{0, 1\}^{L_n}$. The bit length of the order $n$ is denoted by $L_n$ and assumed to be a security parameter. The key generation algorithm is not presented: we assume each participant $i \in \{1, ..., m\}$ is in possession of a proper key pair $\{q_i, Q_i\}$. The signing algorithm and the verification algorithm are presented respectively in Algorithms \ref{alg:musig_sig} and \ref{alg:musig_ver}. In the following $\langle L \rangle$ denotes a unique encoding of the multiset of public keys and the indices used in the signing algorithm are local references to the other cosigners. Moreover Algorithm \ref{alg:musig_sig} is split in interactive rounds according to the \textbf{send} and \textbf{upon reception of} commands.
+Now we can finally look at the inner working of the scheme: it is parameterized by the cyclic group $\mathbb{G}$ (a subgroup of $E(\mathbb{F}_p)$) denoted in additive notation, its order $n$, a generator of the group $G$ and three hash functions $\text{hash}_{com}, \ \text{hash}_{agg}$ and $\text{hash}_{sign}$: $\{0, 1\}^* \to \{0, 1\}^{L_n}$. The bit length of the order $n$ is denoted by $L_n$ and assumed to be a security parameter. The key generation algorithm is not presented: we assume each participant $i \in \{1, ..., m\}$ is in possession of a proper key pair $\{q_i, Q_i\}$. The signing algorithm is presented respectively in Algorithms \ref{alg:musig_sig}. In the following $\langle L \rangle$ denotes a unique encoding of the multiset of public keys and the indices used in the signing algorithm are local references to the other cosigners. Moreover Algorithm \ref{alg:musig_sig} is split in interactive rounds according to the \textbf{send} and \textbf{upon reception of} commands. Verification occurs following the single signature Schnorr verification Algorithm \ref{alg:schnorr_ver}.
 
 \bigskip
 
@@ -64,54 +68,38 @@ Now we can finally look at the inner working of the scheme: it is parameterized 
 		\State $m \gets \text{hash}(M)$
 		\State $\langle L \rangle \gets \{q_1G, Q_2, ..., Q_m\}$
 		\For {$i \gets 1, m$}
-		\State $a_i \gets \text{int}(H_{agg}(\langle L \rangle \ || \ \text{bytes}(Q_i)))$
+		\State $a_i \gets \text{int}(\text{hash}_{agg}(\langle L \rangle \ || \ \text{bytes}(Q_i)))$
 		\EndFor
 		\State $Q \gets \sum_{i = 1}^{m}a_iQ_i$
-		\State $k_1 \xleftarrow{\text{\$}} [1, ..., m - 1]$
-		\State $K_1 \gets k_1G, \ t_1 \gets H_{comm}(\text{bytes}(K_1))$
+		\State $k_1 \xleftarrow{\text{\$}} \{1, ..., n - 1\}$
+		\State $K_1 \gets k_1G, \ t_1 \gets \text{hash}_{comm}(\text{bytes}(K_1))$
 		\State \textbf{send} $t_1$
 		\State \textbf{upon reception of} $t_2, ..., t_m$ \textbf{send} $K_1$
 		\State \textbf{upon reception of} $K_2, ..., K_m$ \textbf{do}
 		\State $\ \ \ \ \ $ \textbf{for} $i \gets 2, m$ \textbf{do}
-		\State $\ \ \ \ \ \ \ \ \ \ $ \textbf{if} $t_i \neq H_{comm}(\text{bytes}(K_i))$ \textbf{do}
+		\State $\ \ \ \ \ \ \ \ \ \ $ \textbf{if} $t_i \neq \text{hash}_{comm}(\text{bytes}(K_i))$ \textbf{do}
 		\State $\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $ \textbf{abort}
 		\State $\ \ \ \ \ \ \ \ \ \ $ \textbf{end if}
 		\State $\ \ \ \ \ $ \textbf{end for} 
 		\State $K \gets \sum_{i = 1}^{m}K_i$
-		\State $c \gets \text{int}(H_{sig}(\text{bytes}(K) \ || \ \text{bytes}(Q) \ || \ m))$
+		\If {$\text{jacobi}(y_K) \neq 1$}
+		\State $k_1 \gets n - k_1$
+		\EndIf
+		\State $c \gets \text{int}(\text{hash}_{sig}(\text{bytes}(x_K) \ || \ \text{bytes}(Q) \ || \ m))$
 		\State $s_1 \gets k_1\ + ca_1q_1 \ (\text{mod} \ n)$
 		\State \textbf{send} $s_1$
 		\State \textbf{upon reception of} $s_2, ..., s_m$ \textbf{do}
 		\State $s \gets \sum_{i = 1}^{m}s_i \ (\text{mod} \ n)$
-		\State \textbf{return} $(K, s)$
-		\EndProcedure
-	\end{algorithmic}
-\end{algorithm}
-
-\bigskip
-
-\begin{algorithm}
-	\caption{MuSig: verification algorithm}
-	\label{alg:musig_ver}
-	\begin{algorithmic}[1]
-		\Procedure{MuSig\_ver}{$L, M, (K, s)$}
-		\State $m \gets \text{hash}(M)$
-		\For {$i \gets 1, m$}
-		\State $a_i \gets \text{int}(H_{agg}(\langle L \rangle \ || \ \text{bytes}(Q_i)))$
-		\EndFor
-		\State $Q \gets \sum_{i = 1}^{m}a_iQ_i$
-		\State $c \gets \text{int}(H_{sig}(\text{bytes}(K) \ || \ \text{bytets}(Q) \ || \ m))$
-		\If {$sG = K + cQ$}
-		\State \textbf{return True}
-		\EndIf
-		\State \textbf{return False}
+		\State \textbf{return} $(x_K, s)$
 		\EndProcedure
 	\end{algorithmic}
 \end{algorithm}
 
 \bigskip
 \noindent
-{\bf Proof of correctness}: We have to prove that $sG = K + cQ$.
+As usual, here follows the proof of the correctness.
+\\
+{\bf Proof}: Loosely speaking, we have to prove that $sG = K + cQ$.
 \\
 $$sG = \left(\sum_{i = 1}^{m} s_i\right)G = \left(\sum_{i = 1}^{m}(k_i + ca_iq_i)\right)G = \sum_{i = 1}^{m}(k_iG + ca_iq_iG) =$$
 $$= \sum_{i = 1}^{m}k_iG + \sum_{i = 1}^{n} ca_iq_iG = \sum_{i = 1}^{m}K_i + c\sum_{i  = 1}^{m}a_iQ_i = K + cQ.$$
@@ -119,17 +107,15 @@ $$= \sum_{i = 1}^{m}k_iG + \sum_{i = 1}^{n} ca_iq_iG = \sum_{i = 1}^{m}K_i + c\s
 
 \bigskip
 \noindent
-For the security proof of the scheme we refer to the original paper \cite{RefWork:11}. The algorithms presented come directly from there: if implemented in Bitcoin according to the deployment of Schnorr suggested in \cite{RefWork:5} they would need to be adapted: however, since the BIP is under review by the community and far from being implemented, we do not proceed with it. 
+For the security proof of the scheme we refer to the original paper \cite{RefWork:11}. 
 \\
-The verification algorithm is constructed getting as input the multiset of public keys $L$. To improve both efficiency and privacy it is immediate to modify it in order to take as input the aggregate key, simply by relying on the standard Schnorr verification algorithm.
+Dealing with ECDSA and Schnorr in Chapter \ref{chpr:dss}, we have seen that in the single user setting there was the possibility to derandomize the signature algorithm without loss of security, by generating the random nonce $k$ through a deterministic function. This is done since pseudo random generation is one of the major sources of problems in cryptography. This is not anymore suggested in the multi-user setting: it is necessary to ensure to use different unpredictable values when the other signers change their $K$ values in repeated signing attempts, otherwise secret key recovery would be possible. 
 \\
-Dealing with ECDSA and Schnorr in chapter \ref{chpr:dss}, we have seen that in the single user setting there was the possibility to derandomize the signature algorithm without loss of security, by generating the random nonce $k$ through a deterministic function. This is done since pseudo random generation is one of the major sources of problems in cryptography. This is not anymore suggested in the multi-user setting: it is necessary to ensure to use different random values when the other signers change their $K$ values in repeated signing attempts, otherwise secret key recovery would be possible. 
-\\
-Here follows an example taken from \cite{RefWork:11}: assume Alice and Bob have key pairs $(q_A, Q_A)$ and $(q_B, Q_B)$, respectively. They want to jointly produce a signature. Alice generates $k_A$ and sends $K_A = k_AG$ to Bob. In a first attempt, Bob responds with $K_B$. Alice then computes:
+Here follows an example taken from directly \cite{RefWork:11}: assume Alice and Bob have key pairs $\{q_A, Q_A\}$ and $\{q_B, Q_B\}$, respectively. They want to jointly produce a signature. Alice generates $k_A$ and sends $K_A = k_AG$ to Bob. In a first attempt, Bob responds with $K_B$. Alice then computes:
 $$K = K_A + K_B,$$
-$$c = H_{sig}(Q \ || \ K \ || \ m),$$
+$$c = \text{hash}_{sig}(x_K \ || \ Q \ || \ m),$$
 $$s_A = k_A + ca_Aq_A \ (\text{mod} \ n),$$
-and sends $s_A$ to Bob. Bob is trying to cheat on Alice, and decides not to produce a valid $s_B$, and thus the protocol fails. A new signing attempt takes place, and Alice again sends the same $K_A$. Bob responds with $K_B' \neq K_B$. Alice then computes $c' = H_{sig}(Q \ || \ K_A + K_B' \ || \ m)$ and $s_A' = k_A + c'a_Aq_A \ (\text{mod} \ n)$ and sends $s_A'$ to Bob. Now Bob is able to derive Alice's private key:
+and sends $s_A$ to Bob. Bob is trying to cheat on Alice, and decides not to produce a valid $s_B$, and thus the protocol fails. A new signing attempt takes place, and Alice again sends the same $K_A$. Bob responds with $K_B' \neq K_B$. Alice then computes $c' = \text{hash}_{sig}(x_{K_A + K_B'} \ || \ Q \ || \ m)$ and $s_A' = k_A + c'a_Aq_A \ (\text{mod} \ n)$ and sends $s_A'$ to Bob. Now Bob is able to derive Alice's private key:
 $$s_A - s_A' = (c - c')a_Aq_A \ (\text{mod} \ n) \ \Longrightarrow \ q_A = (c - c')^{-1}a_A^{-1}(s_A - s_A') \ (\text{mod} \ n).$$
 To avoid this problem, each signer must ensure that whenever any $K$ value sent by other cosigners or the message $m$ changes, his $k_i$ changes as well. 
 
@@ -141,7 +127,7 @@ To avoid this problem, each signer must ensure that whenever any $K$ value sent 
 \label{threshold}
 With the name threshold signatures we refer to policies of the kind $m$-of-$n$, where it is necessary that at least $m$ participants of the scheme decide to collaborate to produce a valid signature. This kind of policy is very popular in Bitcoin, since it is flexible and has many applications: for example, a single user could use such a policy to improve security, storing the keys on different machines, at the same time defeating the risk of loss of some keys. 
 \\
-In this section we will study a provable secure Schnorr based threshold scheme. For the security proof we refer to \cite{RefWork:14}. The scheme is constructed on top of the Pedersen Verifiable Secret Sharing Scheme (VSSS) and Pedersen's multi-party protocol to generate a random shared secret, hence we start presenting these two schemes.
+In this section we will study a provable secure Schnorr based threshold scheme. For the security proof we refer to \cite{RefWork:14}. The scheme is constructed on top of the Pedersen Verifiable Secret Sharing Scheme (VSS scheme) and Pedersen's multi-party protocol to generate a random shared secret, hence we start presenting these two schemes.
 
 \bigskip
 
@@ -149,13 +135,13 @@ In this section we will study a provable secure Schnorr based threshold scheme. 
 \label{subsec:1}
 Hereinafter, we will refer to threshold signature schemes as $t$-of-$m$ schemes in order to avoid confusion in the notation.
 \\
-Typically, in a $t$-of-$m$ secret sharing scheme, a trusted dealer distributes a secret $s$ to $m$ players $P_1, ..., P_m$ in such a way that any subgroup of at least $t$ members can recover the secret, while any subgroup of cardinality strictly less than $t$ learns nothing about it. A verifiable secret sharing scheme moreover prevents the dealer from cheating, since each participant can verify that his share of the secret is consistent with the others. The novelty introduced by Pedersen is that his scheme is non-interactive in the verification and does not require trust between the parties involved. Still there is a trusted dealer, a figure we would like to get rid of: this will be done through the second protocol we will present in Section \ref{subsec:2}. Here follows the VSSS proposed by Pedersen.
+Typically, in a $t$-of-$m$ secret sharing scheme, a trusted dealer distributes a secret $s$ to $m$ players $P_1, ..., P_m$ in such a way that any subgroup of at least $t$ members can recover the secret, while any subgroup of cardinality strictly less than $t$ learns nothing about it. A verifiable secret sharing scheme moreover prevents the dealer from cheating, since each participant can verify that his share of the secret is consistent with the others. The novelty introduced by Pedersen is that his scheme is non-interactive in the verification and does not require trust between the parties involved. Still there is a trusted dealer, a figure we would like to get rid of: this will be done through the second protocol that will be presented in Section \ref{subsec:2}. Here follows the VSS scheme proposed by Pedersen.
 
 \bigskip
 \noindent
-Fix an elliptic curve over a prime finite field $E(\mathbb{F}_p)$, characterized by the EC domain parameters $T = (a, b, p, G, n, h)$ and fix another generator $H$ of the same cyclic group generated by $G$. We require that these two generators are "nothing up my sleeves" (NUMS), meaning that we do not know the discrete logarithm of one with respect to the other, and vice versa.
+Fix an elliptic curve over a prime finite field $E(\mathbb{F}_p)$, characterized by the EC domain parameters $T = (a, b, p, G, n, h)$ and fix another generator $H$ of the same cyclic group generated by $G$. We require that these two generators are \textit{nothing up my sleeves} (NUMS), meaning that we do not know the discrete logarithm of one with respect to the other, and vice versa.
 \\
-Assume that the dealer has a secret value $s \in \mathbb{Z}_n$ and a number $s' \in \mathbb{Z}_n$ generated at random. He commits\footnote{A commitment scheme is a cryptographic primitive used to commit to some secret data without revealing anything about it. Commitment schemes are designed so that it is unfeasible to change the secret: when revealed in a second moment, we have probabilistic assurance that it is the real committed value. A typical example of commitment scheme is a collision resistant hash function, e.g. SHA-256.} to the couple $(s, s')$ through the so called Pedersen commitment $C_0 = sG + s'H$. The NUMS property is needed to prevent the person who commits from lying about the values he committed to. Assume indeed that the dealer knows the discrete logarithm of H with respect to G: $H = r_HG$. In this case she could write: $C_0 = sG + s'H = (s + s'r_H)G = (s \pm ar_H + s'r_H)G = (s - ar_H)G + (s'r_H + ar_H)G = (s - ar_H)G + (s' + a)H, \ \forall a \in \mathbb{Z}_n$.
+Assume that the dealer has a secret value $s \in \mathbb{Z}_n$ and a number $s' \in \mathbb{Z}_n$ generated at random. He commits\footnote{A commitment scheme is a cryptographic primitive used to commit to some secret data without revealing anything about it. Commitment schemes are designed so that it is unfeasible to change the secret: when revealed in a second moment, we have probabilistic assurance that it is the real committed value. A typical example of commitment scheme is a collision resistant hash function, e.g. SHA-256.} to the couple $(s, s')$ through the so called Pedersen commitment $C_0 = sG + s'H$. The NUMS property is needed to prevent the person who commits from lying about the values he committed to. Assume indeed that the dealer knows the discrete logarithm of $H$ with respect to $G$: $H = r_HG$. In this case he could write: $C_0 = sG + s'H = (s + s'r_H)G = (s \pm ar_H + s'r_H)G = (s - ar_H)G + (s'r_H + ar_H)G = (s - ar_H)G + (s' + a)H, \ \forall a \in \mathbb{Z}_n$. 
 \\
 After having broadcasted the commitment, the secret $s$ can be shared among $P_1, ..., P_m$ through the following protocol:
 
@@ -178,20 +164,20 @@ After having broadcasted the commitment, the secret $s$ can be shared among $P_1
 \begin{enumerate}
 	\item Verifies the consistency of its share of the secret as:
 	$$s_iG + s'_iH = \sum_{j = 0}^{t - 1}i^jC_j.$$
-	If this check fails he broadcasts a compliant against the dealer;
-	\item For each compliant from a player $i$, the dealer defends himself by broadcasting the values $(s_i, s'_i) = (f(i), f'(i))$ that satisfies the checking equation at point 1;
+	If this check fails, she broadcasts a compliant against the dealer;
+	\item For each compliant from a player $i$, the dealer defends himself by broadcasting the values $(s_i, s'_i) = (f(i) \ (\text{mod} \ n), f'(i) \ (\text{mod} \ n))$ that satisfy the checking equation at point 1;
 	\item Aborts the protocol if:
 	\begin{itemize}
 		\item The dealer received more than $t$ compliants in step 1;
-		\item She answered to a compliant in step 2 with values that violates again the checking equation.
+		\item He answered to a compliant in step 2 with values that violates again the checking equation.
 	\end{itemize}
 \end{enumerate}
-Pedersen proved that any coalition of less than $t$ players cannot get any information about the shared secret, provided that the discrete logarithm in $E(\mathbb{F}_p)$ is hard\footnote{This is important since we are not adding cryptographic assumptions.}. For the proof we refer to the original paper \cite{RefWork:13}. Although we do not look at the proof, it may still be of interest to check why the verification procedure should succeed:
+Pedersen proved that any coalition of less than $t$ players cannot get any information about the shared secret, provided that the discrete logarithm in $E(\mathbb{F}_p)$ is hard\footnote{This is important since we are not adding cryptographic assumptions.}. For the proof we refer to the original paper \cite{RefWork:13}. Although we do not look at the proof, it may still be of interest to check why the verification procedure at step 1 should succeed:
 $$s_iG+ s'_iH = f(i)G + f'(i)H = \sum_{j = 0}^{t- 1}f_ji^jG + \sum_{j = 0}^{t - 1}f'_ji^jH =$$
 $$ \sum_{j = 0}^{t - 1}i^j(f_jG + f'_jH)= \sum_{j = 0}^{t - 1}i^jC_j.$$
 We used the convention that $f_0 = s$ and $f'_0 = s'$. Remembering that $C_0$ commits to the secret and that the other $C_j$ commits to the polynomials, we have the assurance that the dealer is not cheating. Indeed there is one and only one polynomial of degree at most $t - 1$ satisfying $f(i) = s_i$, respectively $f'(i) = s'_i$, for $t$ values of $i$. 
 \\
-This is also the key property that allows the reconstruction of the secret value from any group $\mathcal{P}$ of $t$ participants. Indeed the members in $\mathcal{P}$ can recover the polynomial $f$ through the Lagrange's interpolation formula, that given a set of $t$ points $(i, s_i = f(i))$ returns the lowest degree polynomial (in this case a $t - 1$ degree polynomial) that satisfies $f(i) = s_i$:
+This is also the key property that allows the reconstruction of the secret value from any group $\mathcal{P}$ of $t$ participants. Indeed the members in $\mathcal{P}$ can recover the polynomial $f$ through the Lagrange's interpolation formula, that given a set of $t$ points $(i, s_i = f(i) \ (\text{mod} \ n))$ returns the lowest degree polynomial (in this case a $t - 1$ degree polynomial) interpolating the given points:
 $$f(u) = \sum_{i \in \mathcal{P}}f(i)\omega_i(u), \ \text{where} \ \omega_i(u) = \prod_{j \in \mathcal{P}, \ j \neq i}\frac{u - j}{i - j} \ (\text{mod} \ n).$$
 Since it holds that $s = f(0)$ by definition, the group $\mathcal{P}$ can directly reconstruct the secret as:
 $$s = f(0) = \sum_{i \in \mathcal{P}}f(i)\omega_i,  \ \text{where} \ \omega_i = \omega_i(0) = \prod_{j \in \mathcal{P}, \ j \neq i}\frac{j}{j - i} \ (\text{mod} \ n).$$
@@ -200,20 +186,20 @@ $$s = f(0) = \sum_{i \in \mathcal{P}}f(i)\omega_i,  \ \text{where} \ \omega_i = 
 
 \subsection{Protocol for the generation of a random shared secret}
 \label{subsec:2}
-As we pointed out before, we would like to get rid of the trusted dealer, so that it is possible to generate the key between distrustful parties. The key generation phase of the signature scheme generates a random shared secret key in a distributed way according to the following protocol:
+As we pointed out before, we would like to get rid of the trusted dealer, so that it is possible to generate a key pair between distrustful parties. The key generation phase of the signature scheme generates a random shared secret key in a distributed way according to the following protocol:
 \\
 \\
 {\bf Each participant $P_i$}:
 \begin{enumerate}
-	\item Chooses $r_i, r'_i \in \mathbb{Z}_n$ at random and verifiably shares $(r_i, r'_i)$ acting as the dealer according to the Pedersen's VSSS described above. Let the sharing polynomials of participant $i$ be $f_i(u) = \sum_{j = 0}^{t - 1}a_{ij}u^j$, $f'_i(u) = \sum_{j= 0}^{t - 1}a'_{ij}u^j$, where $a_{i0} = r_i$ and $a'_{i0} = r'_i$. The public commitments are $C_{ik} = a_{ik}G + a'_{ik}H$ for $k \in \{0, ..., t - 1\}$;
-	\item Sets $H_0 = \{P_j \ | \ P_j \ \text{is not detected to be cheating at step 1}\}$. The distributed secret value $r$ is equal to $\sum_{i \in H_0}r_i$. Each participant $P_i$ sets his share of the secret at $s_i= \sum_{j \in H_0}f_j(i) \ (\text{mod} \ n)$ and set the value $s'_i = \sum_{j \in H_0}f'_j(i) \ (\text{mod} \ n)$.
-	\item Each player in $H_0$ broadcasts $R_i = r_iG$ via Feldman's VSSS:
+	\item Chooses $r_i, r'_i \in \mathbb{Z}_n$ at random and verifiably shares $(r_i, r'_i)$ acting as the dealer according to the Pedersen's VSS scheme described above. Let the sharing polynomials of participant $i$ be $f_i(u) = \sum_{j = 0}^{t - 1}a_{ij}u^j$, $f'_i(u) = \sum_{j= 0}^{t - 1}a'_{ij}u^j$, where $a_{i0} = r_i$ and $a'_{i0} = r'_i$. The public commitments are $C_{ik} = a_{ik}G + a'_{ik}H$ for $k \in \{0, ..., t - 1\}$;
+	\item Sets $H_0 = \{P_j \ | \ P_j \ \text{is not detected to be cheating at step 1}\}$. The distributed secret value $r$ is equal to $\sum_{i \in H_0}r_i$. Each participant $P_i$ sets his share of the secret at $s_i= \sum_{j \in H_0}f_j(i) \ (\text{mod} \ n)$ and set the value $s'_i = \sum_{j \in H_0}f'_j(i) \ (\text{mod} \ n)$;
+	\item Each player in $H_0$ broadcasts $R_i = r_iG$ via Feldman's VSS scheme:
 	\begin{enumerate}
 		\item Each player $P_i$ in $H_0$ broadcasts $A_{ik} = a_{ik}G$ for $k \in \{0, ..., t - 1\}$;
 		\item Each player $P_j$ verifies the values broadcast by the other players in $H_0$: for each $P_i \in H_0$, $P_j$ checks:
 		$$f_i(j)G = \sum_{k = 0}^{t - 1} j^kA_{ik}.$$
-		If the check fails for an index $i$, $P_j$ complaints against $P_i$ broadcasting the values $(f_i(j), f'_i(j))$ that satisfy the checking equation of the Pedersen's VSSS but not the one at point (b);
-		\item For players $P_i$ who received at least one valid complaint, the other players run the reconstruction phase of Pedersen's VSSS to compute $r_i$, $f_i(u)$ and $A_{ik}$ for $k \in \{0, ..., t - 1\}$. All participants in $H_0$ set $R_i = r_iG$. 
+		If the check fails for an index $i$, $P_j$ complaints against $P_i$ broadcasting the values $(f_i(j), f'_i(j))$ that satisfy the checking equation of the Pedersen's VSS scheme  but not the one at point (b);
+		\item For players $P_i$ who received at least one valid complaint, the other players run the reconstruction phase of Pedersen's VSS scheme to compute $r_i$, $f_i(u)$ and $A_{ik}$ for $k \in \{0, ..., t - 1\}$. All participants in $H_0$ set $R_i = r_iG$. 
 	\end{enumerate} 
 \end{enumerate}
 After the execution of the protocol the following equations hold:
@@ -223,9 +209,9 @@ $$f(i) = s_i.$$
 We introduce the following notation: 
 $$(s_1, ..., s_n) \xleftrightarrow{\text{(t, m)}} (r|R, a_iG, H_0), \ i \in \{1, ..., t - 1\}.$$
 It means that $s_j$ is the share of secret key $r$ belonging to $P_j$ for $j \in H_0$. The values $a_iG$
-are the public commitments of the sharing polynomials $f(u)$ and $(r, R)$ is the key pair that can be reconstructed by any subgroup of $H_0$ composed of at least $t$ participants. 
+are the public commitments of the sharing polynomials $f(u)$ and $(r, R)$ is the key pair that can be reconstructed by any subgroup of $H_0$ composed of at least $t$ participants: this can be done via Lagrange's interpolation forrmula, as described in Section \ref{subsec:1}.
 \\
-Before we pass to analyse the actual signature scheme, let's give a look at the checking equation at point (b) in the previous protocol.
+Before we pass to analyse the actual signature scheme, let's give a look at the checking equation at point (b) in the protocol:
 $$f_i(j)G = \sum_{k = 0}^{t - 1}a_{ik}j^kG = \sum_{k = 0}^{t - 1}j^kA_{ik}.$$
 
 \subsection{Threshold signature scheme}
@@ -234,33 +220,32 @@ Now that we have defined the primitives on which it is built, we can finally dis
 \bigskip
 \noindent
 {\bf Key generation}: All $m$ participants have to cooperate to generate a public key $Q$ and a share of the secret key for each participant $P_j$. This can be done relying on the protocol presented in Section \ref{subsec:2}. The output of the protocol is:
-$$(\alpha_1, ..., \alpha_n) \xleftrightarrow{\text{(t, m)}} (q|Q, b_iG, H_0), \ i \in \{1, ..., t - 1\}.$$
+$$(\alpha_1, ..., \alpha_m) \xleftrightarrow{\text{(t, m)}} (q|Q, b_iG, H_0), \ i \in \{1, ..., t - 1\}.$$
 The $\alpha$ values denote the secret key share belonging to $P_j$. They will be used to generate a partial signature for the key pair $(q, Q)$.
 \\
 \\
-{\bf Signing algorithm}: Let $m$ denote the message to be signed. Suppose that a subset $H_1 \subseteq H_0$ wants to issue a signature. The members of $H_1$ proceed as follows:
+{\bf Signing algorithm}: Let $msg$ denote the message to be signed. Suppose that a subset $H_1 \subseteq H_0$ wants to issue a signature. The members of $H_1$ proceed as follows:
 \begin{enumerate}
-	\item If $|H_1| < t$, aborts. Otherwise, the subset $H_1$ generates a random shared secret following again the protocol presented in the paragraph about the generation of a random shared secret. We denote the output as:
-	$$(\beta_1, ..., \beta_n) \xleftrightarrow{\text{(t, m)}} (k|K, c_iG, H_2), \ i \in \{1, ..., t - 1\}.$$
+	\item If $|H_1| < t$, aborts. Otherwise, the subset $H_1$ generates a random shared secret following again the protocol presented in Section \ref{subsec:2}. We denote the output as:
+	$$(\beta_1, ..., \beta_m) \xleftrightarrow{\text{(t, m)}} (k|K, c_iG, H_2), \ i \in \{1, ..., t - 1\};$$
 	\item If $\text{jacobi}(y_K) \neq 1$, then each player $i$ sets $\beta_i = n - \beta_i$;
 	\item If $|H_2| < t$, aborts. Otherwise, each $P_i \in H_2$ reveals
 	$$\gamma_i = \beta_i + e\alpha_i \ (\text{mod} \ n),$$
-	where $e = \text{int}(\text{hash}(\text{bytes}(x_K) \ || \ \text{bytes}(Q) \ || \ m))$.
-	\item Each $P_i \in H_2$ verifies $\forall l \in H_2$:
+	where $e = \text{int}(\text{hash}(\text{bytes}(x_K) \ || \ \text{bytes}(Q) \ || \ msg))$.
+	\item Each $P_i \in H_2$ verifies $\forall P_l \in H_2$:
 	$$\gamma_lG = \begin{cases} K + \sum_{j = 1}^{t - 1} c_jl^jG + e\left(Q + \sum_{j = 1}^{t - 1}b_jl^jG\right), & \mbox{if } \text{jacobi}(y_K) = 1 \\ - K -\sum_{j = 1}^{t - 1} c_jl^jG + e\left(Q + \sum_{j = 1}^{t - 1}b_jl^jG\right), & \mbox{if } \text{jacobi}(y_K) \neq 1 \end{cases}$$
-	Let $H_3 = \{P_j \ | \ P_j \text{not detected to be cheating at step 3}\}$.
+	Let $H_3 = \{P_j \ | \ P_j \ \text{not detected to be cheating at step 3}\}$.
 	\item If $|H_3| < t$, aborts. Otherwise each $P_i \in H_3$ selects an arbitrary subset $H_4 \subseteq H_3$ with $|H_4| = t$ and computes $\sigma$ satisfying $\sigma = k + eq$, where:
 	$$\sigma = \sum_{j \in H_4}\gamma_j\omega_j, \ \text{where} \ \omega_j = \prod_{h \in H_4, \ h \neq j}\frac{h}{h - j}.$$
-	The signature is $(x_K, \sigma)$. To verify the signature, the same formula as in Schnorr scheme applies:
-	$$\sigma G = K + eQ.$$
+	The signature is $(x_K, \sigma)$; it is verified as a simple Schnorr signature.
 \end{enumerate}
 This concludes the presentation of the protocol. Nonetheless there are some formulas that deserve greater attention.
 \begin{itemize}
-	\item Checking formula at point 3\footnote{The formula is checked in case $\text{jacoi}(y_K) = 1$; the other case is proved in a similar way.}: 
+	\item Checking formula at point 4\footnote{The formula is checked in case $\text{jacobi}(y_K) = 1$; the other case is proved in a similar way.}: 
 	$$\gamma_lG = (\beta_l + e\alpha_l)G = \beta_lG + e\alpha_lG = $$
 	$$= \left(k + \sum_{j = 1}^{t - 1}c_jl^j\right)G + e\left(q + \sum_{j = 1}^{t - 1}b_jl^j\right)G =$$
 	$$= K + \sum_{j = 1}^{t - 1}c_jl^jG + e\left(Q + \sum_{j = 1}^{t - 1}b_jl^jG\right).$$
-	\item Formula used to compute $\sigma$: we defined $\gamma_i = \beta_i + e\alpha_i, \ \forall i \in H_2$. In particular the equation holds for every $i \in H_4$, with $|H_4| = t$. The $\alpha$ and $\beta$ values are defined to be the pointwise evaluation of the sharing polynomials created during the two iterations of the Pedersen protocol for the generation of a random shared secret, that we denotes by $F_1(u)$ and $F_2(u)$. These polynomials have degree $t - 1$, so that we can define:
+	\item Formula used to compute $\sigma$: we defined $\gamma_i = \beta_i + e\alpha_i \ (\text{mod} \ n), \ \forall i \in H_2$. In particular the equation holds for every $i \in H_4$, with $|H_4| = t$. The $\alpha$ and $\beta$ values are defined to be the pointwise evaluation of the sharing polynomials created during the two iterations of the Pedersen protocol for the generation of a random shared secret, that we denote by $F_1(u)$ and $F_2(u)$. These polynomials have degree $t - 1$, so that we can define:
 	$$F_3(u) = F_2(u) + eF_1(u) \ \Longrightarrow $$
 	$$\Longrightarrow \ F_3(0) = F_2(0) + eF_1(0) = $$
 	$$= k + eq = \sigma.$$
@@ -269,13 +254,13 @@ This concludes the presentation of the protocol. Nonetheless there are some form
 	Thus, $\sigma$ can be directly computed as:
 	$$\sigma = F_3(0) = \sum_{j \in H_4}\gamma_j\omega_j, \ \text{where} \ \omega_j = \prod_{h \in H_4, \ h \neq j}\frac{h}{h - j}.$$
 \end{itemize}
-Notice that the scheme is robust, meaning that a corrupt signer who does not follow the protocol will be detected. The validity of the partial signatures computed at step 2 is immediately tested at step 3.
+Notice that the scheme is robust, meaning that a corrupt signer who does not follow the protocol will be detected. The validity of the partial signatures computed at step 3 is immediately tested at step 4.
 
 \bigskip
 
 \bigskip
 \noindent
-The scheme presented is complex and cumbersome, but all the work presented happens off-chain: the Bitcoin blockchain would see a standard transaction, indistinguishable from others. Nobody could tell that it required a threshold signature.
+The scheme presented is complex and cumbersome, but all the computations occur off-chain: the Bitcoin blockchain would see a standard transaction, indistinguishable from others. Nobody could tell that it required a threshold signature. This means that the protocol is highly private, but it comes with the downside of not being accountable, since the participants that do not sign cannot learn who instead did it.
 
 \bigskip
 
@@ -283,9 +268,9 @@ The scheme presented is complex and cumbersome, but all the work presented happe
 
 \section{Adaptor signature}
 \label{adaptor}
-Adaptor signatures are the building block for the so called scriptless script, an innovative idea by Andrew Poelstra: the major aim is to introduce much more flexibility in systems lacking a scripting language (e.g. the Mimblewimble protocol discussed in \cite{MW1} and \cite{MW2}). However, it turns out that these kind of signatures have a couple of interesting applications also in Bitcoin, that we are going to explore.
+Adaptor signatures are the building block for the so called \textit{scriptless script}, an innovative idea by Andrew Poelstra: the major aim is to introduce much more flexibility in systems lacking a scripting language (e.g. the Mimblewimble protocol discussed in \cite{MW1} and \cite{MW2}). However, it turns out that these kind of signatures have a couple of interesting applications also in Bitcoin, that we are going to explore.
 \\
-Adaptor signatures are based on Schnorr and leverage its linearity property. Therefore, introducing Schnorr in Bitcoin would allow the deployment of adaptor signatures for free. As we will see in the next two sections, this tool affects significantly cross-chain atomic swaps and payment channels (\cite{RefWork:17}), where transactions can be made atomic through signatures and not through Bitcoin scipts. This traduces again in transactions that on-chain look the same as ordinary single signer transactions, improving greatly privacy and efficiency: smaller transactions result in lower fees, lower blockchain size and lower CPU requirement (since the UTXO set, i.e. the set saved in the RAM of the unspent transaction outputs, shrinks), while a unique aggregate signature hides completely the participants involved.
+Adaptor signatures are based on Schnorr and leverage its linearity property. Therefore, introducing Schnorr in Bitcoin would allow the deployment of adaptor signatures for free. As we will see in the next two sections, this tool affects significantly cross-chain atomic swaps and payment channels, where transactions can be made atomic through signatures and not through Bitcoin scipts. This traduces again in transactions that on-chain look the same as ordinary single signer transactions, improving greatly privacy and efficiency: smaller transactions result in lower fees, lower blockchain size and lower CPU requirement (since the UTXO set, i.e. the set saved in the RAM of the unspent transaction outputs, shrinks), while a unique aggregate signature hides completely the participants involved.
 
 \bigskip
 \noindent
@@ -300,7 +285,7 @@ To clarify how adaptor signatures work, let's look at an example. Consider two p
 		\Procedure{adaptor\_sig}{$M, q$}
 		\State $m \gets \text{hash}(M)$
 		\State $k \gets \text{int}(\text{hash}(\text{bytes}(q) \ || \ m)) \ (\text{mod} \ n)$
-		\State $t \xleftarrow{\text{\$}} [1, ..., n - 1]$
+		\State $t \xleftarrow{\text{\$}} \{1, ..., n - 1\}$
 		\State $K \gets kG, \ T \gets tG$
 		\If {$\text{jacobi}(y_{K + T}) \neq 1$}
 		\State $k \gets n - k, \ t \gets n - t$
@@ -315,7 +300,7 @@ To clarify how adaptor signatures work, let's look at an example. Consider two p
 \bigskip
 \noindent
 As we have already pointed out, the signature $(r', s') = (x_{K + T}, s')$ is not valid. Indeed, following the verification algorithm \ref{alg:schnorr_ver} Alice would compute:
-$$e = \text{int}(\text{hash}(\text{bytes}(r') \ || \ \text{bytes}(Q_B) \ || \ m) \ (\text{mod} \ n) \ \Longrightarrow$$
+$$e = \text{int}(\text{hash}(\text{bytes}(r') \ || \ \text{bytes}(Q_B) \ || \ m)) \ (\text{mod} \ n) \ \Longrightarrow$$
 $$\Longrightarrow \ s'G - eQ_B = (k + eq_B)G - eQ_B = kG = K.$$
 Then the algorithm would check whether or not $x_K$ is equal to $r' = x_{K + T}$, failing. This is because the secret nonce $k$ has not been offset by $t$.
 \\
@@ -334,27 +319,37 @@ Obviously also the viceversa holds true: given the adaptor signature $(r, r', s'
 
 \bigskip
 \noindent
-Adaptor signatures can be used jointly with the multi-signature scheme described in Section \ref{musig}. Assuming again that it is Bob that wants to generate an adaptor signature, he would modify slightly Algorithm \ref{alg:musig_sig}, while Alice follows it closely: when computing $K_B$ at step 9, he generates at random $t$ and computes $T = tG$. Then, he commits to $K_B + T$ and, at point 12, sends it to Alice. The final modification occurs at step 21: with $s_B$ he sends Alice also $T$, so that she can verify the adaptor signature. Nothing else changes. The final joint signature is $(K_A + K_B + T, s)$, where $s = s_A + s_B = k_A + \text{hash}(K_A + K_B + T \ || \ Q \ || \ m)\text{hash}(\langle L \rangle \ || \ Q_A)q_A + k_B + \text{hash}(K_A + K_B + T \ || \ Q \ || \ m)\text{hash}(\langle L \rangle \ || \ Q_B)q_B$ and aggregated public key $Q =  \text{hash}(\langle L \rangle \ || \ Q_A)Q_A + \text{hash}(\langle L \rangle \ || \ Q_B)Q_B$. As before this signature is not valid for $Q$, since Bob did not offset $s_B$ by $t$. Again, learning $t$ is equivalent to learning a valid signature.
+Adaptor signatures can be used jointly with the multi-signature scheme described in Section \ref{musig}. Assuming again that it is Bob that wants to generate an adaptor signature, he would modify slightly Algorithm \ref{alg:musig_sig}, while Alice follows it closely: when computing $K_B$ at step 9, he generates at random $t$ and computes $T = tG$. Then, he commits to $K_B + T$ and, at point 11, sends it to Alice. The final modification occurs at step 24: with $s_B$ he sends Alice also $T$, so that she can verify the adaptor signature. Nothing else changes. 
+\\
+The final joint signature is: 
+$$(x_{K_A + K_B + T}, s),$$
+where
+$$s = s_A + s_B = $$
+$$= k_A + \text{hash}(\text{bytes}(x_{K_A + K_B + T}) \ || \ \text{bytes}(Q) \ || \ m)\text{hash}(\langle L \rangle \ || \ \text{bytes}(Q_A))q_A + $$
+$$+ k_B + \text{hash}(\text{bytes}(x_{K_A + K_B + T}) \ || \ \text{bytes}(Q) \ || \ m)\text{hash}(\langle L \rangle \ || \ \text{bytes}(Q_B))q_B$$ 
+and
+$$Q =  \text{hash}(\langle L \rangle \ || \ \text{bytes}(Q_A))Q_A + \text{hash}(\langle L \rangle \ || \ \text{bytes}(Q_B))Q_B.$$ 
+As before this signature is not valid for $Q$, since Bob did not offset $s_B$ by $t$. Again, learning $t$ is equivalent to learning a valid signature.
 \\
 This is the key idea behind the applications we will study in the following sections.
 
 \bigskip
 \noindent
-Adaptor signatures may not seem a big deal, but it is worth noticing that if $t$ is some necessary data for a separate protocol, arbitrary steps of arbitrary protocols can be made equivalent to signature production. In such a case it could be useful to attach auxiliary data to the signature to ensure that the role of $t$ is the one claimed. In particular, using the same $T$ in multiple subsequent adaptor signatures, it is possible to make arbitrary sets of signatures atomic: once a valid signature is produced, $t$ is revealed making all the signatures valid. 
+Adaptor signatures may not seem a big deal, but it is worth noticing that if $t$ is some necessary data for a separate protocol, arbitrary steps of arbitrary protocols can be made equivalent to signature production. In such a case it could be useful to attach auxiliary data to the signature to ensure that the role of $t$ is the one claimed. In particular, using the same $T$ in multiple subsequent adaptor signatures, it is possible to make arbitrary sets of signatures atomic: once a valid signature is produced, $t$ is revealed making all the signatures valid. Last thing worth of being pointed out is that adaptor signatures are deniable: for every signature on the blockchain one can come up with some $t$ and construct a linked adaptor signature.
 
 \bigskip
 
 \subsection{Atomic swap}
 \label{atomic}
-In this section we look at one application of adaptor signatures, starting from the easier concept of cross-chain atomic swap. Notice that all previously seen Schnorr applications discussed in Sections \ref{musig} and \ref{threshold} can be extended outside the Bitcoin ecosystem. Atomic swaps instead are a concept strictly related to the crypto-currency world; for this reason we suggest to stop for a moment and give a look to Appendix \ref{app:A}: in there we give an overview of the role that signatures play in Bitcoin and a brief introduction to Bitcoin scripting language.
+In this section we look at one application of adaptor signatures, starting from the easier concept of cross-chain atomic swap. Notice that the Schnorr's applications discussed in Sections \ref{musig} and \ref{threshold} can be extended outside the Bitcoin ecosystem. Atomic swaps instead are a concept strictly related to the crypto-currency world; for this reason we suggest to stop for a moment and give a look to Appendix \ref{app:A}: in there we give an overview of the role that signatures play in Bitcoin and a brief introduction to Bitcoin scripting language.
 
 \bigskip
 \noindent
 A cross-chain atomic swap is the exchange of different crypto-currencies among two users in an atomic way, meaning that the swap is successful or the balances of the participants remain unchanged, in such a way that it is not possible to cheat, stealing coins from the other party. Following Bitcoin's spirit this is done in a decentralized way, without the need of resorting on a trusted third party. Atomic swaps' functionalities are important, since usually to convert a crypto-currency into another it is necessary to resort on exchanges, that charges high fees and constitutes a single point of failure.
 \\
-Let's start discussing how atomic swaps are implemented nowadays: to avoid recourse on exchanges and frauds from other users, the atomicity of the swap is enforced through the so called HTLC (Hashed TimeLock Contract). It is a special kind of locking script used to lock the funds on both blockchains. It is constructed in such a way that when one party claims the funds on one chain, the other party can retrieve the coins locked in the other transaction. If something goes wrong or if too much time has elapsed it is possible for both parties to get back their original coins.
+Let's start discussing how atomic swaps are implemented nowadays: to avoid recourse on exchanges and frauds from other users, the atomicity of the swap is enforced through the so called HTLC (Hashed TimeLock Contract). It is a special kind of locking script used to lock the funds on both blockchains. It is constructed in such a way that when one party claims the funds on one chain, the other party can retrieve the coins locked in the other transaction. If something goes wrong or if too much time elapses, it is possible for both parties to get back their coins.
 \\
-Considering as usual the two parties to be Alice and Bob that want to trade A-coins for B-coins, an HTLC has a structure similar to the following one:
+Considering as usual the two parties to be Alice and Bob, we imagine that they want to trade A-coins for B-coins. An HTLC constructed for this situation could have a structure similar to the following one:
 
 \bigskip
 
@@ -379,7 +374,7 @@ This HTLC would lock the funds on Alice's blockchain. The two branches of the if
 
 \bigskip
 \noindent
-The second path corresponds to Alice's lock-time refund possibility: after enough time has elapsed\footnote{The exact amount depending on $<$num$>$ OP\_CHECKSEQUENCEVERIFY. This is not the unique possibility to fix a time lock: the OP\_CHECKSEQUENCEVERIFY operator can be substituted by OP\_CHECKLOCKTIMEVERIFY.} she can claim the funds through an unlocking script that would look something like this, where again the 0 at the end enforces the execution of the else path:
+The second path corresponds to Alice's lock time refund possibility: after enough time has elapsed\footnote{The exact amount depending on $<$num$>$ OP\_CHECKSEQUENCEVERIFY. This is not the unique possibility to fix a time lock: the OP\_CHECKSEQUENCEVERIFY operator can be substituted by OP\_CHECKLOCKTIMEVERIFY.} she can claim the funds through an unlocking script that would look something like this, where again the 0 at the end enforces the execution of the else path:
 
 \bigskip
 
@@ -389,9 +384,9 @@ The second path corresponds to Alice's lock-time refund possibility: after enoug
 
 \bigskip
 \noindent
-A similar contract, where the roles of Alice and Bob are exchanged, would lock Bob's fund on the B-coin chain. Assuming it is Bob that generates the secret preimage, he would need to send its hash (the digest) to Alice, in order to construct the transactions. The atomicity of the swap is ensured by the fact that when Bob spends the output locked by the HTLC he publishes on-chain the preimage: Alice, that needs to monitor the blockchain, could now use the same preimage to take the B-coins.
+A similar contract, where the roles of Alice and Bob are exchanged, would lock Bob's fund on the B-coin chain. Assuming it is Bob that generates the secret preimage, he would need to send its hash (the digest) to Alice, in order to construct the transaction. The atomicity of the swap is ensured by the fact that when Bob spends the output locked by the HTLC he publishes on-chain the preimage: Alice, that needs to monitor the blockchain, could now use the same preimage to take the B-coins.
 \\
-Caution has to be used when setting time locks, in order to avoid fund loss: if Bob chooses the preimage, the time locked refund of B-coins should be greater than the one locking the A-coins. Otherwise Bob would be able to wait until his lock time expires and get his B-coins back. However Alice's lock time, being greater, would still prevents the creation of a refund transaction: Bob could publish the preimage and take all the money.
+Caution has to be used when setting the time locks, in order to avoid fund loss: if Bob chooses the preimage, the time locked refund of B-coins should be greater than the one locking the A-coins. Otherwise Bob would be able to wait until his lock time expires and get his B-coins back. However Alice's lock time, being greater, would still prevents the creation of a refund transaction: Bob could publish the preimage and take all the money.
 
 \bigskip
 \noindent
@@ -407,18 +402,18 @@ As we have just seen, Alice and Bob have to agree on some aspects of the protoco
 \noindent
 Now we analyse the possibilities offered by the introduction of adaptor signatures: first of all, they would allow to bring atomic swaps also on chains which do not support a scripting language to enforce an HTLC. 
 \\
-For the sake of simplicity, but without loss of generality, we assume a unitary exchange rate between A-coins and B-coins. Here follows the detailed protocol to be enforced:
+For the sake of simplicity, but without loss of generality, we assume a unitary exchange rate between A-coins and B-coins. Here follows the detailed protocol to be enforced\footnote{We present the protocol in the case both chains support Schnorr signature; actually this is not strictly required.}:
 \begin{enumerate}
 	\item Alice and Bob agree on a pair of locking scripts which are secured by an aggregated public key. Let's name these outputs $O_1$ and $O_2$: they are locked respectively by the pairs of keys $(Q_1^A, Q_1^B)$ and $(Q_2^A, Q_2^B)$, aggregated through the MuSig protocol described in Section \ref{musig}. In particular:
 	\begin{enumerate}
 		\item Alice prepares a transaction TX$_1$ paying one A-coin into $O_1$, but does not sign it. Then she gives it to Bob and asks for a refund transaction that pays back the funds to Alice from TX$_1$, but has lock time L$_1$ (the two cooperates in the signature procedure). Upon reception of the refund transaction Alice can sign TX$_1$. If Bob broadcasts it he can do nothing since he has not Alice's partial signature; Alice can just wait until the lock time expires and broadcast the refund transaction;
 		\item Bob mirrors Alice's behaviour: he prepares TX$_2$ paying one B-coin to $O_2$ but does not sign it; he shares TX$_2$ and requires a signed refund transaction from Alice: it pays from TX$_2$ to Bob with lock time L$_2 > L_1$. Upon reception of the refund transaction (the two must interact to sign it), Bob can sign TX$_2$.
 	\end{enumerate}
-	\item At this point Alice and Bob can broadcast TX$_1$ and TX$_2$ and both waits for confirmation on the two blockchains. If there are problems at this step, refund transactions can be used to regain control of the money after having waited for the locktime to expire;
+	\item At this point Alice and Bob can broadcast TX$_1$ and TX$_2$ and both wait for confirmation on the two blockchains. If there are problems at this step, refund transactions can be used to regain control of the money after having waited for the locktime to expire;
 	\item Alice and Bob engage the MuSig protocol to spend from TX$_1$ and TX$_2$. Bob generates in parallel adaptor signatures for both $O_1$ and $O_2$ with the same $t$ value and sends them to Alice. She verifies them\footnote{In particular she verifies that both are valid adaptor signatures and that the offset value used is the same.}: if they are valid, she can provide her partial signature to spend TX$_1$,while if there are problems she aborts the protocol broadcasting the refund transaction;
 	\item When Bob spends the output of TX$_1$ thanks to Alice's signature, she learns the secret offset $t$ (monitoring the blockchain) and becomes capable of spending from TX$_2$. At this point Bob cannot cheat: being L$_2$ greater than L$_1$ Alice has time to take the B-coins.
 \end{enumerate}
-In the cooperative case (no refund transaction broadcast) the unlocking scripts of TX$_1$ and of TX$_2$ look exactly the same as an ordinary single user payment: moreover, since only Alice had the adaptor signature allowing her to extract $t$, nobody but Alice and Bob can link the transactions between the two chains.
+In the cooperative case (no refund transaction broadcast) the unlocking scripts of TX$_1$ and of TX$_2$ look exactly the same as an ordinary single user payment: moreover, since only Alice had the adaptor signatures allowing her to extract $t$, nobody but Alice and Bob can link the transactions between the two chains.
 \\
 Notice that the efficiency achievement is impressive: we were able to condensate the verbose script semantics required by HTLC in a fixed size signature: this would results, once again, in greater privacy and efficiency, leading to an improvement also in fungibility.
 
@@ -426,8 +421,8 @@ Notice that the efficiency achievement is impressive: we were able to condensate
 
 \subsection{Lightning Network}
 \label{ln}
-The lightning network is an example of the broader concept of payment channel, an idea originally proposed by Joseph Poon and Thaddeus Dryja in \cite{RefWork:18}: the aim of this construction is to improve the well known scalability problem of Bitcoin through the so called layer 2 solutions. The name comes from the fact that they do not scale on chain\footnote{It is nearly impossible for Bitcoin to reach the transaction volume of centralized circuits like Visa: Bitcoin processes about ten transaction per second, while Visa has been able to handle a peak of 47000 tps. It means that Visa is around 5000 times better than Bitcoin in this regard: an on-chain scale would result in a bloat of the blockchain size.}, but rather suggests the implementation of other protocols to handle off-chain transactions. The blockchain is seen as a court to which it is necessary to resort only in controversial situations or to close the channel. Although other implementations have been suggested (e.g. the eltoo protocol\footnote{The lightning network enforces an honest behaviour under a threat; eltoo avoids this punitive logic enforcing the possibility to update the broadcast of an old transaction, but needs the deployment of the SIGHASH\_NOINPUT soft fork proposed in \cite{BIP5}. Moreover three transactions have to be committed to the blockchain to open and close any channel.} described in \cite{RefWork:19}), nowadays layer 2 solutions leverage the HTLC presented in Section \ref{atomic}. The idea is to create bidirectional channels between the participants that transact frequently: the lightning network can be seen as a routed path composed by these channels, in such a way that it is not necessary to open a new channel anytime two parties want to transact.
-We start presenting the basic working of the lightning network, that could be of interest on its own. Since the inner working is very similar to the one presented when dealing with atomic swaps (being the atomicity the core property to be preserved), we will give only a low level overview.
+The Lightning Network is an example of the broader concept of payment channel, an idea originally proposed by Joseph Poon and Thaddeus Dryja in \cite{RefWork:18}: the aim of this construction is to improve the well known scalability problem of Bitcoin through the so called layer 2 solutions. The name comes from the fact that they do not scale on chain\footnote{It is nearly impossible for Bitcoin to reach the transaction volume of centralized circuits like Visa: Bitcoin processes about ten transactions per second, while Visa has been able to handle a peak of 47000 tps. It means that Visa is around 5000 times better than Bitcoin in this regard: an on-chain scale would result in a bloat of the blockchain size.}, but rather suggest the implementation of other protocols to handle off-chain transactions. The blockchain is seen as a court to which it is necessary to resort only in controversial situations or to close the channel. Although other implementations have been suggested (e.g. the eltoo protocol\footnote{The Lightning Network enforces an honest behaviour under a threat; eltoo avoids this punitive logic enforcing the possibility to update the broadcast of an old transaction, but needs the deployment of the SIGHASH\_NOINPUT soft fork proposed in \cite{BIP5}. Moreover three transactions have to be committed to the blockchain to open and close any channel.} described in \cite{RefWork:19}), nowadays layer 2 solutions leverage the HTLC presented in Section \ref{atomic}. The idea is to create bidirectional channels between the participants that transact frequently: the Lightning Network can be seen as a routed path composed by these channels, in such a way that it is not necessary to open a new channel anytime two parties want to transact.
+We start presenting the basic working of the Lightning Network, that could be of interest on its own. Since its inner working is sort of an extension of the one presented when dealing with atomic swaps (being the atomicity the core property to be preserved), we will give only a low level overview.
 \\
 First we consider the example of a single channel between Alice and Bob, then we will look at how different channels can be connected to create a multi-hop payment channel.
 \\
@@ -442,29 +437,29 @@ Alice and Bob opens a channel committing some funds in 2-of-2 multi-signature ad
 	OP_IF
 		OP_HASH160 <revocation address>
 	OP_ELSE
-		1000 OP_CHECKSEQUENCEVERIFY OP_DROP OP_HASH160 <Bob's address> 
+		<num> OP_CHECKSEQUENCEVERIFY OP_DROP OP_HASH160 <Bob's address> 
 	OP_ENDIF
 	OP_EQUALVERIFY OP_CHECKSIG\end{lstlisting}
 \end{itemize}
-In Alice's transaction the role of the two parties are exchanged. These transactions are signed by the other party, so that at any time the holder can also sign and broadcast: the revocation address is required to update the balance since it prevents the broadcast of an old state. This is a key problem for payment channels: any signed commitment transaction could be broadcast and the blockchain is not amendable, thus it is fundamental to prevent old refunding transactions from being broadcast (there is an economic incentive for the party that spent some money in the payment channel to broadcast an older version where he has more money). The revocation address is linked to a combination of Alice's public key and a revocation public key (revocation address = RIPEMD160(SHA-256($Q_A + Q_{rev}$))): through this mechanism, when Bob gives Alice the secret revocation key $q_{rev}$, by adding it to its private key only she is able to retrieve the funds locked in Output 1 before the lock time has elapsed. In this way, if Bob broadcast an old state Alice has 1000 blocks to act and take all the funds: this is the threat enforcing honest behaviour we were mentioning before. Notice that revocation is not automatic: Alice has to monitor the blockchain and the same holds true for Bob.
+In Alice's transaction the role of the two parties are exchanged. These transactions are signed by the other party, so that at any time the holder can also sign and broadcast: the revocation address is required to update the balance since it prevents the broadcast of an old state. This is a key problem for payment channels: any signed commitment transaction could be broadcast and the blockchain is not amendable, thus it is fundamental to prevent old refunding transactions from being broadcast (there is an economic incentive for the party that spent some money in the payment channel to broadcast an older version where he has more money). The revocation address is linked to a combination of Alice's public key and a revocation public key (revocation address = RIPEMD160(SHA-256($Q_A + Q_{rev}$))): through this mechanism, when Bob gives Alice the secret revocation key $q_{rev}$, by adding it to its private key only she is able to retrieve the funds locked in Output 1 before the lock time has elapsed. In this way, if Bob broadcast an old state Alice has some time to take action and punish Bob retrieving all the funds: this is the threat enforcing an honest behaviour we were mentioning before. Old transactions are toxic, since an erroneous broadcast would result in the funds being lost: it is better to delete intermediate states. However, revocation is not automatic: Alice has to monitor the blockchain and the same holds true for Bob.
 \\
-Anytime they want to update the balance, they exchange revocation key and signatures for the new commitment transaction.
+Anytime they want to update the balance, they exchange the revocation keys and signatures for the new commitment transaction.
 \\
 The closure of a channel could happen cooperatively, so that the two parties cooperate creating a transaction with the correct balance but without any time lock, or not, meaning that one of the parties broadcast a commitment transaction for which the other party has not the revocation key: the drawback in this case is that he will need to wait for the lock time to expire.  
-\\
-To allow the routing of different channels, constructing multi-hop payment channels, we need the HTLC presented in Section \ref{atomic}: this contract ensures the atomicity of all the payments along the path.
 
 \bigskip
 \noindent
-Consider now the situation in which Alice wants to pay Carol 1 BTC but they do not have an open channel: they could open one committing to the blockchain and consequently paying the associated fees. A better idea could be to rely on the lightning network: it automatically finds a path going from Alice to Carol taking advantage of already opened channels. In our case we consider Alice-Bob and Bob-Carol.
+Now that we have seen the basic idea behind bidirectional channels, we can study their routing. Such a construction creates multi-hop payment channels, for which HTLC are needed: this contract ensures the atomicity of all the payments along the path.
 \\
-Alice's lightning network node (LN node, not to be confused with the Bitcoin node) needs to find a proper path connecting her and Carol. Notice that she is the only one knowing this path: every other participant knows only the previous and the following nodes. Obviously Carol knows that Alice has to pay her: for this reason she generates a secret $r$ and sends its hash $H_r = \text{hash}(r)$ to Alice. The atomicity of all the transactions is ensured by this hash value. At this point Alice constructs an HTLC paying to the hash $H_r$: the output of the transaction has to be slightly greater than 1 BTC (e.g. 1.002 BTC), so that the participants in the channel are rewarded with a small fee for the participation. Alice gives the HTLC to Bob, that updates the balance in the channel: Alice's balance decreases but Bob's does not increase; this is due to the fact that Alice's funds are committed in the HTLC and Bob can redeem them only knowing $r$. The HTLC provides a lock time refund logic, so that Bob has a limited amount of time to learn the secret. For this reason he construct another HTLC updating the state of his channel with Carol, the logic being the same as above: he locks 1.001 BTC (takes for himself 0.001 BTC as fee) contingent to revelation of the $H_r$'s preimage, with a smaller time lock with respect to the previous contract. The smaller time lock gives Bob enough time to take the coins from Alice's HTLC in case $r$ is revealed by Carol. At this point Carol has secret $r$ and can redeem the funds: she could either send the HTLC on-chain revealing $r$ and closing the channel with Bob, or she can simply reveal the secret to Bob and update the balance of the channel. The same holds true for Bob, that has incentives to reveal $r$ to Alice (remember that he earned a small fee). The secret acts as a sort of receipt for Alice, telling her that the payment has been successful.
+Consider the situation in which Alice wants to pay Carol 1 BTC. There is not an open channel between them: they could open one committing to the blockchain and consequently paying the associated fees, but a better idea is to rely on the Lightning Network. It automatically finds a path going from Alice to Carol taking advantage of already opened channels. In our case we consider the channels Alice-Bob and Bob-Carol.
+\\
+Alice's Lightning Network node (LN node, not to be confused with the Bitcoin node) needs to find a proper path connecting her and Carol. Notice that she is the only one knowing this path: every other participant knows only the previous and the following nodes. Obviously Carol knows that Alice has to pay her: for this reason she generates a secret $r$ and sends its hash $H_r = \text{hash}(r)$ to Alice. The atomicity of all the transactions is ensured by this hash value. At this point Alice constructs an HTLC paying to the hash $H_r$: the output of the transaction has to be slightly greater than 1 BTC (e.g. 1.002 BTC), so that the participants in the channel are rewarded with a small fee for the participation. Alice gives the HTLC to Bob, that updates the balance in the channel: Alice's balance decreases but Bob's does not increase; this is due to the fact that Alice's funds are committed in the HTLC and Bob can redeem them only knowing $r$. The HTLC provides a lock time refund logic, so that Bob has a limited amount of time to learn the secret. For this reason he construct another HTLC updating the state of his channel with Carol, the logic being the same as above: he locks 1.001 BTC (takes for himself 0.001 BTC as a fee) contingent to revelation of the $H_r$'s preimage, with a smaller time lock with respect to the previous contract. The smaller time lock gives Bob enough time to take the coins from Alice's HTLC in case $r$ is revealed by Carol. At this point Carol has secret $r$ and can redeem the funds: she could either send the HTLC on-chain revealing $r$ and closing the channel with Bob, or she can simply reveal the secret to Bob and update the balance of the channel. The same holds true for Bob, that has incentives to reveal $r$ to Alice (remember that he earned a small fee). The secret acts as a sort of receipt for Alice, telling her that the payment has been successful.
 
 
 \bigskip
 \noindent
-In the non cooperative case, these transactions go on-chain and are easily identifiable for blockchain observers, leading to a non negligible lack of privacy. This issue can be avoided through adaptor signatures. Now that we have the basics of the lightning network, we can study how them would bring benefits to the protocol\footnote{A much thorough discussion can be found in \cite{RefWork:17}.}. Instead of using $H_r$, Alice would require public keys $T_B$ and $T_C$ both from Bob and Carol (a unique offset could be used, but relying on one for participant allows reblinding of the offset). The funds of her transaction would be locked requiring a 2-of-2 Schnorr multi-signature: during the signature procedure she requires from Bob an adaptor signature with public offset $T_B + T_C$, so that Bob cannot provide a valid signature not knowing $t_C$. Similarly, Bob sends coins to Carol demanding for an adaptor signature with $T_C$ as offset. At this point, 
-Carol can produce a valid signature knowing $t_C$: she would grab the funds, revealing $t_C$ (either by publishing on-chain or by telling directly to Bob) and thus allowing Bob to do the same with Alice's transaction.
+In the non cooperative case, these transactions go on-chain and are easily identifiable for blockchain observers, leading to a non negligible lack of privacy. This issue can be avoided through adaptor signatures\footnote{A much thorough discussion can be found in \cite{RefWork:17}.}. Instead of using $H_r$, Alice would require public keys $T_B$ and $T_C$ both from Bob and Carol (a unique offset could be used, but relying on one for participant allows reblinding of the offset). The funds of her transaction would be locked requiring a 2-of-2 Schnorr multi-signature: during the signature procedure she requires from Bob an adaptor signature with public offset $T_B + T_C$, so that Bob cannot provide a valid signature not knowing $t_C$. Similarly, Bob sends coins to Carol demanding for an adaptor signature with $T_C$ as offset. At this point, 
+Carol can produce a valid signature knowing $t_C$: she would grab the funds, revealing $t_C$ (either by publishing on-chain or by telling directly to Bob) and thus allowing Bob to do the same with Alice's transaction. Notice that for this construction to work it is necessary to include a lock time refund logic.
 \\
-Beyond the usual efficiency and privacy benefits,we have seen that the secret values used as offset can be reblinded between hops, allowing long chains of transactions to be made atomic while even the participants cannot identify which transactions are part of the chain. This is in sharp contrast with the HTLC based channels: although Alice does not reveal the path, all the members have the same hash and can collude to find out the nodes.
+Beyond the usual efficiency and privacy benefits,we have seen that the secret values used as offset can be reblinded between hops, allowing long chains of transactions to be made atomic while even the participants cannot identify which transactions are part of the chain. This is in sharp contrast with the HTLC based channels: although Alice does not reveal the path, all the members have the same hash and can collude to find out the nodes contributing to the channel.
 
