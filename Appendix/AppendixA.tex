@@ -95,7 +95,7 @@ Once the transaction is received by a node, it has to be validated. Table \ref{t
 \noindent
 After having looked at the basic construction, we can study the verification procedure for an $m$-of-$n$ multi-signature transaction. But first, let's try to understand why they are so appealing. 
 \\
-The primary benefit is to greatly increase the difficulty of stealing the coins. With a 2-of-2 address, you can keep the two keys on separate machines, so that theft would require a double attack; it can also be used to protect against accidental loss: with a 2-of-3 address, not only does theft require obtaining 2 different keys, but you can still use the coins if you forget any single key; it can also be used for more advanced scenarios such as an address shared by multiple people, where a majority of vote is required to use the funds.
+The primary benefit is to greatly increase the difficulty of stealing the coins. With a 2-of-2 address, you can keep the two keys on separate machines, so that theft would require a double attack; it can also be used to protect against accidental loss: with a 2-of-3 address, not only does theft require obtaining 2 different keys, but you can still use the coins if you forget any single key; it can also be used for more advanced scenarios such as an address shared by multiple people, where a majority of votes is required to use the funds.
 
 \bigskip
 
@@ -128,7 +128,7 @@ The primary benefit is to greatly increase the difficulty of stealing the coins.
 
 \bigskip
 \noindent
-Such a construction would be typically used for corporate accounts, with different layers for security, and by escrow services. For practical reasons, multi-signature transactions are fundamental for a proper custody of any digital assets.
+Such a construction would be typically used for corporate accounts, with different layers for security, and by escrow services. For practical reasons, multi-signature transactions are fundamental for a proper custody of any digital asset.
 
 \bigskip
 \noindent
@@ -168,7 +168,7 @@ The scriptSig starts with a 0 due to a bug in the OP\_CHECKMULTISIG operator, th
 
 \bigskip
 \noindent
-As the reader may have detected another small flaw of the multi-signature construction adopted in Bitcoin is that the signatures have to be ordered as the public keys in the locking script. Since verification is made by subsequent attempts (first signature checked against first public key: if valid pass to the second signature, otherwise check the first signature against the second public key), a proper ordering traduces in a faster verification.
+As the reader may have detected another small flaw of the multi-signature construction adopted in Bitcoin is that the signatures have to be ordered as the public keys in the locking script. Since verification is made by subsequent attempts (first signature checked against first public key: if valid pass to the second signature, otherwise check the first signature against the second public key, ...), a proper ordering traduces in a faster verification.
 
 \bigskip
 \noindent

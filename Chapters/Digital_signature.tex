@@ -342,7 +342,7 @@ For $m$ signatures we would have $m$ couples $(a_i, K_i), \ i = 0, ..., m - 1$ a
 		\item Substitute the top two elements $(a_0, K_0)$ and $(a_1, K_1)$ with the transformed values $(a_0 - a_1, K_0)$ and $(a_1, K_0 + K_1)$. If $a_0 - a_1 = 0$ you can remove one element;
 		\item Sort the list again;
 	\end{itemize}
-\item When only one element remains, with very large probability it will be of the form $(1, K)$, otherwise it will be of the form $(a, K)$: the output is $K$ or $aK$, respectively.
+\item When only one element remains, with very large probability it will be of the form $(1, K)$, otherwise it will be of the form $(a, K)$\footnote{The final value of the multiplier is the greatest common divisor of all the starting random factors: for this reason, when $m$ is sufficiently large, with high probability it will be 1 or small.}: the output is $K$ or $aK$, respectively.
 \end{itemize}
 The intuition is that, if we have $m$ signatures, we would have $m$ multiplications of the kind $a_iK_i$. Each time we do the above transformation, the difference $a_0 - a_1$ would be, on average, $m$ orders of magnitude lower: at each iteration we reduce the order of one multiplier by a factor of $m$ at the expenses of an EC addition. This scales muh better than the double and add algorithm used to implement scalar multiplication: indeed in this case we have an EC point addition for every bit of the multiplier\footnote{\url{https://bitcoin.stackexchange.com/questions/80698/schnorrs-batch-validation.}}.
 
@@ -352,7 +352,7 @@ Algorithm \ref{alg:schnorr_batch} presents the batch verification for a number $
 \\
 We highlight again the fact that the algorithm, taken from the BIP, is constructed to work on secp256k1, as clearly shown by the $14^{th}$ step, where we can see the defining equation. However it can be easily extended to other curves satisfying the relation $p = 3 \ (\text{mod} \ 4)$: this property is used in the $15^{th}$ step, that we try here to clarify. Referring to the algorithm, we have that the $y$ coordinates are the square roots of $c$ and can be computed as $y = \pm c^{\frac{p + 1}{4}}$, if they exist, due to a lemma by Lagrange\footnote{\url{https://en.wikipedia.org/wiki/Quadratic\_residue\#Prime\_or\_prime\_power\_modulus}.}, applicable when $p \equiv 3 \ (\text{mod} \ 4)$. Euler's criterion tells us that, given an odd prime $p$ and an integer $d$ coprime to $p$, we have $d^{\frac{p - 1}{2}} = \pm 1 \ (\text{mod} \ p)$, depending on whether $d$ is a quadratic residue ($d^{\frac{p - 1}{2}} = 1 \ (\text{mod} \ p)$) or not ($d^{\frac{p - 1}{2}} = - 1 \ (\text{mod} \ p)$). The same criterion applied to $y$ yields to $y^{\frac{p - 1}{2}} \ (\text{mod} \ p) = \pm c^{\frac{p + 1}{4}\frac{p - 1}{2}} \ (\text{mod} \ p) = \pm (c^{\frac{p - 1}{2}})^{\frac{p + 1}{4}} \ (\text{mod} \ p) = \pm 1^{\frac{p + 1}{4}} \ (\text{mod} \ p) = \pm 1 \ (\text{mod} \ p)$. Therefore, $y = c^{\frac{p + 1}{4}} \ (\text{mod} \ p)$ is a quadratic residue, while $y = - c^{\frac{p + 1}{4}} \ (\text{mod} \ p)$ is not: this approach is thus used to comply with the chosen symmetry breaking method.
 \begin{figure}
-	\makebox[\textwidth]{\includegraphics[scale=0.7]{Images/speedup.eps}}
+	\makebox[\textwidth]{\includegraphics[scale=0.45]{Images/speedup.eps}}
 	\captionof{figure}{Batch validation speed up.}
 	\label{fig:figure6}
 \end{figure}
