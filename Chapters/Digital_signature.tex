@@ -61,7 +61,7 @@ The signing and verification algorithms are displayed in Algorithms \ref{alg:ecd
 		\If {$r = 0$}
 		\State \textbf{go to} step 4
 		\EndIf 
-		\State $s \gets k^{-1}(z + rq_) \ (\text{mod} \ n)$
+		\State $s \gets k^{-1}(z + rq) \ (\text{mod} \ n)$
 		\If {$s = 0$}
 		\State \textbf{go to} step 4
 		\EndIf
@@ -193,7 +193,7 @@ Through public key recovery, the verification of a signature becomes implicit: y
 
 \section{Schnorr signature algorithm}
 \label{schnorr}
-In this section we finally pass to analyse the core of the present work, following closely the recent Bitcoin Improvement Proposal by Pieter Wuille (\cite{RefWork:5}) on the standardization of the Schnorr signature.
+In this section we finally pass to analyse the core of the present work, following closely the recent Bitcoin Improvement Proposal (BIP) by Pieter Wuille and others \cite{RefWork:5} on the standardization of the Schnorr signature.
 \\
 As stated in the BIP, ECDSA is standardized, while the Schnorr signature, due to the presence of a patent in past years, is not. As we will see this lack hides some possibilities; on top of that, Schnorr itself is better than ECDSA in several aspects:
 \begin{itemize}
@@ -201,14 +201,14 @@ As stated in the BIP, ECDSA is standardized, while the Schnorr signature, due to
 	\item Non-malleability: ECDSA, as already showed, is malleable. On the other hand, Schnorr signatures are provably non-malleable\footnote{Segregated witness (SegWit) solves the known malleability problem of ECDSA, but we do not know if others exist. On the other hand, Schnorr is strongly unforgeable under chosen message attacks (SUF-CMA), a property that prevents malleability.};
 	\item Linearity: Schnorr verification algorithm is linear in both the terms of the signature. This property allows the construction of several higher level protocols with interesting properties, some of which will be studied in Chapter \ref{chpr:application}.
 \end{itemize}
-Thanks to these characteristics, the introduction of Schnorr in Bitcoin would result in privacy and efficiency improvements. Moreover, thanks to the version system introduced by SegWit, Schnorr can be deployed "easily" through a soft fork. Schnorr signature could moreover enable easier implementations of some protocols that take advantage of the Bitcoin blockchain, such as atomic swaps and payment channels.
+Thanks to these characteristics, the introduction of Schnorr in Bitcoin would result in privacy and efficiency improvements. Moreover, thanks to the version system introduced by SegWit, Schnorr can be deployed ``easily'' through a soft fork. Schnorr signature could moreover enable easier implementations of some protocols that take advantage of the Bitcoin blockchain, such as atomic swaps and payment channels.
 
 \bigskip
 \noindent
 The fact that Schnorr is not standardized, allows us to make design choices in order to implement other features in addition to the native ones:
 \begin{itemize}
 	\item Batch validation: the formulation of ECDSA that is standardized cannot be validated more efficiently in batch compared to individually. Switching to Schnorr offers the opportunity to choose a formulation that allows batch validation. This can be an important feature in Bitcoin since when validating a block we need to verify multiple signatures; moreover, we are interested that all of them are valid: if the verification fails, we do not care about which signature caused the failure. We simply reject the whole block;
-	\item Fixed size: the proposed Schnorr standardization is of fixed size, 64 bytes. This is in contrast with the 70-72 bytes long ECDSA (caused by the DER encoding). This would lead to a reduction of on-chain transactions' size.
+	\item Fixed size: the proposed Schnorr standardization is of fixed size, 64 bytes. This is in contrast with the 71-72 bytes long ECDSA (caused by the DER encoding). This would lead to a reduction of on-chain transactions' size.
 \end{itemize}
 When signing with Schnorr there are two possible shape for the signature. EC Schnorr signatures for the message $m$ and public key $Q$ involve a point $K$ and integers $e$ and $s$ which satisfy $e = \text{hash}(K \ || \ m)$ and $sG = K + eQ$. The two different verification equations depend on whether we decide to include $e$ or $K$ in the signature.
 \begin{itemize}
@@ -225,12 +225,14 @@ This is not a concern for the Bitcoin protocol itself, due to the difficulty of 
 \\
 Let's give a deeper look at how the formulation without key prefixing can be exploited in case of unhardened derivation using BIP32. Without entering in the details, in BIP32 it is specified how to derive key pairs from a unique master key pair, easing incredibly the backup procedure: the major achievement is that the whole tree of key pairs is recoverable from a special number called seed, that can be safely stored in efficient ways. We label the parent key pair as $(q_P, Q_P)$ and the child key pair as $(q_C, Q_C)$. The scheme for unhardened derivation is represented in Figure \ref{fig:bip32} and works as follows: we use the hash function HMAC, that outputs in the space of 512 bits, fed with the parent public key, the parent chain code (for our purposes the only thing that matters is that it is derived as half of the output of the HMAC function, i.e. it is a 256 bit string) and the child index. The result is divided in two halves, an offset and the child chaincode (that is needed for further derivations). The offset is added to the parent private key (modulo the order of the curve) to obtain the child private key. Thus, denoting the offset as $f$, we have the following relation: $q_C = f + q_P \ (\text{mod} \ n) \ \Longrightarrow \ Q_C = fG + Q_P$.
 
-\begin{center}
-	\includegraphics[scale = 0.4]{Images/bip32.png}
+\begin{figure}
+	\noindent
+	\makebox[\textwidth]{\includegraphics[width=15cm, height=7cm]{Images/bip32.png}}
 	\captionof{figure}{BIP32's unhardened derivation.}
 	\label{fig:bip32}
 	\source{\cite{RefWork:7}}
-\end{center}
+\end{figure}
+\noindent
 Now, imagine an attacker is given a valid signature $(K, s)$ for public key $Q_P$ and message $m$. Relying on the previous relation, he is able to forge a valid signature for public key $Q_C$ on the same message $m$ as $(K, s + \text{hash}(K \ || \ m)f)$. Indeed we have:
 $$(s + \text{hash}(K \ || \ m)f)G = sG + \text{hash}(K \ || \ m)fG = $$
 $$= K + \text{hash}(K \ || \ m)Q_P + \text{hash}(K \ || \ m)fG = K + \text{hash}(K \ || \ m)(Q_P + fG) = $$
@@ -359,7 +361,7 @@ We highlight again the fact that the algorithm, taken from the BIP, is construct
 
 \bigskip
 \noindent
-In Figure \ref{fig:figure6} it is represented the speed up: the red line is obtained through a logarithmic fit. The $x$-axis represents the number of signatures $n$ in logarithmic scale, while along the $y$-axis we find the ratio between the time required to validate $n$ signatures one by one and the time required to verify the batch. We got back the results presented in \cite{RefWork:5}, where it is shown that the time to verify $n$ signatures grows with $O\left(\frac{n}{log(n)}\right)$.
+Figure \ref{fig:figure6} represents the speed up: the red line is obtained through a logarithmic fit. The $x$-axis represents the number of signatures $n$ in logarithmic scale, while along the $y$-axis we find the ratio between the time required to validate $n$ signatures one by one and the time required to verify the batch. We got back the results presented in \cite{RefWork:5}, where it is shown that the time to verify $n$ signatures grows with $O\left(\frac{n}{log(n)}\right)$.
 
 \begin{algorithm}
 	\caption{Schnorr: batch verification algorithm}

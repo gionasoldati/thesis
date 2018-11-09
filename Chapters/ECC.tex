@@ -19,14 +19,14 @@ It can be shown that the formulas for point addition are the same derived in Sec
 	\label{fig:figure4}
 	\source{\url{https://en.wikipedia.org/wiki/Elliptic_curve\#Elliptic_curves_over_finite_fields}.}
 \end{center}
-In Figure \ref{fig:figure4} it is represented the typical shape of an elliptic curve over a finite field: we can see that we are not anymore dealing with a smooth curve, but with a finite set of points scattered along the plane. We can notice a certain degree of symmetry with respect to the line $y = \frac{p}{2}$, with the exception of the points with $y$ coordinate equal to zero, that correspond to the roots of the cubic $x^3 + ax + b$ in $\mathbb{F}_p$.
+In Figure \ref{fig:figure4} the typical shape of an elliptic curve over a finite field is represented: we can see that we are not anymore dealing with a smooth curve, but with a finite set of points scattered along the plane. We can notice a certain degree of symmetry with respect to the line $y = \frac{p}{2}$, with the exception of the points with $y$ coordinate equal to zero, that correspond to the roots of the cubic $x^3 + ax + b$ in $\mathbb{F}_p$.
 \\
 It is still possible to define a geometric method for point addition: the general idea is that we draw the line passing through the points considered. Since we are working in modular arithmetic, this line "repeats" itself along the plane. Once the line intersects a third point, we take the opposite one to be the result of the addition. The approach is presented in Figure \ref{fig:figure5}, however the method can be somewhat counterintuitive, especially when dealing with point doubling, so we stick with the algebraic notation.
 
 \bigskip
 \noindent
 The number of points on an EC over $\mathbb{F}_q$ plays a central role in the cryptographic applications, so we state here a useful theorem that allows to give an estimate:
-\begin{thm} [{\bf Hasse's theorem}] Let $\mathbb{F}_q$ be a finite field and let $E$ be an elliptic curve defined over $\mathbb{F}_q$. Then the order of $E(\mathbb{F}_q)$ (i.e. the number of points) satisfies: $$|q + 1 - \#E(\mathbb{F}_q)| \leq 2\sqrt{q}$$
+\begin{thm} [{\bf Hasse's theorem}] Let $\mathbb{F}_q$ be a finite field and let $E$ be an elliptic curve defined over $\mathbb{F}_q$. Then the order of $E(\mathbb{F}_q)$ (i.e. the number of points) satisfies: $$|q + 1 - \#E(\mathbb{F}_q)| \leq 2\sqrt{q}.$$
 \end{thm}
 \begin{center}
 	\includegraphics[width=0.9\linewidth]{Images/sum_ec_over_ff.eps}
@@ -130,19 +130,19 @@ Through this algorithm we are checking that $Q$ is effectively a point on the cu
 
 \subsection{Jacobian coordinates}
 \label{jac}
-We have already told that for EC over finite fields the same formulas previously seen hold, with the calculations done modulo $p$. What we have not told is that this comes with a downside: in particular we have now to deal with modular inversion, an operation that, although can be done efficiently, is up to two orders of magnitude slower than field's multiplication.
+We have already written that for EC over finite fields the same formulas previously seen hold, with the calculations done modulo $p$. What we have not dealt with is that this comes with a downside: in particular we have now to deal with modular inversion, an operation that, although can be done efficiently, is up to two orders of magnitude slower than field's multiplication.
 \\
 In the next chapter we will deal with digital signatures and we will see that ECDSA requires modular inversion. This traduces in poor performances when it comes to a system like Bitcoin in which signatures are (potentially) verified by each participant in the network to validate transactions. Therefore, it is sometimes advantageous to avoid modular inversion, either in the formulas for point addition or in the signature scheme. The first case can be solved through a change of coordinates: the approach consists in writing all the points as points in a projective space, the key idea being to defer the divisions by multiplying them into a denominator, represented then as a new coordinate, instead of performing every division immediately. Only at the very end we perform a single division to convert from projective coordinates back to affine coordinates. 
 
 \bigskip
 \noindent
-Jacobian coordinates are a modification of projective coordinates, typically used since they lead to a faster doubling procedure. In affine form, each elliptic curve point has two coordinates $(x, y)$. In projective form, each point will have three coordinates $(X, Y, Z)$, with the restriction that $Z$ is never zero for points different from the point at infinity. The forward mapping is given by $(x, y) \mapsto (xz^2, yz^3, z)$, for any non zero $z$ (usually chosen to be 1 for convenience). The reverse mapping is given by $(X, Y, Z) \mapsto (X/Z^2, Y/Z^3)$, as long as $Z$ is non zero.
+Jacobian coordinates are a modification of projective coordinates, typically used since they lead to a faster doubling procedure. In affine form, each elliptic curve point has two coordinates $(x, y)$. In projective form, each point will have three coordinates $(X : Y : Z)$, with the restriction that $Z$ is never zero for points different from the point at infinity\footnote{A projective point is denoted by $(X : Y : Z)$ since, in general, the two dimensional projective space \textbf{P}$_K^2$ over a field $K$ is given by equivalence classes of triples $(X, Y, Z)$, with $X, Y, Z \in K$ and at least one element different from zero. Here equivalence between $(X_1, Y_1, Z_1)$ and $(X_2, Y_2, Z_2)$ means that $\exists \lambda \in K \ | \ (X_1, Y_1, Z_1) = \lambda(X_2, Y_2, Z_2)$. Thus, the equivalence classes only depend on the ratios of $X$ to $Y$ to $Z$, from which the notation.}. The forward mapping is given by $(x, y) \mapsto (xz^2, yz^3, z)$, for any non zero $z$ (usually chosen to be 1 for convenience). The reverse mapping is given by $(X : Y : Z) \mapsto (X/Z^2, Y/Z^3)$, as long as $Z$ is non zero.
 \\
 The elliptic curve $y^2 = x^3 + ax + b$ becomes:
 $$Y^2 = X^3 + aXZ^4 + bZ^6.$$
-The point at infinity now has the coordinates $\infty = (1 : 1 : 0)$: indeed, substituting $Z = 0$ in the equation defining the curve we get $Y^2 = X^3$; then we simply normalize.
+The point at infinity now has the coordinates $(1 : 1 : 0)$: indeed, substituting $Z = 0$ in the equation defining the curve we get $Y^2 = X^3$; then we simply normalize.
 \\
-Let $Q_i = (X_i : Y_i : Z_i), \ i = 1, 2$ be points on the elliptic curve $Y^2 = X^3 + aXZ^4 + bZ^6$. Then:
+Let $Q_i = (X_i : Y_i : Z_i), \ i = 1, 2$, be points on the elliptic curve $Y^2 = X^3 + aXZ^4 + bZ^6$. Then:
 $$(X_3 : Y_3 : Z_3) = (X_1 : Y_1 : Z_1) + (X_2 : Y_2 : Z_2),$$
 where $X_3,Y_3$ and $Z_3$ are computed as follows:
 \begin{itemize}
@@ -153,7 +153,7 @@ where $X_3,Y_3$ and $Z_3$ are computed as follows:
 	Defining $T = Y_1Z_2^3$, $U = Y_2Z_1^3$, $W = U - T$, $R = X_1Z_2^2$, $S = X_2Z_1^2$ and $V = S - R$ we can write:
 	$$m = \frac{U - T}{SZ_1Z_2 - RZ_1Z_2} = \frac{W}{VZ_1Z_2}.$$
 	Now consider:
-	$$x_3 = m^2 - x_1 - x_2 = \frac{W^2}{V^2Z_1^2Z_2^2} - \frac{X_1}{Z_1^2} - \frac{X_2}{Z_2^2} = \frac{W^2}{V^2Z_1^2Z_2^2} - \frac{X_1}{Z_1^2}\cdot\frac{V^2Z_2^2}{V^2Z_2^2} - \frac{X_2}{Z_2^2}\cdot\frac{V^2Z_1^2}{V^2Z_1^2} = $$ $$= \frac{W^2 - V^2X_1Z_2^2 - V^2X_2Z_1^2}{V^2Z_1^2Z_2^2} = \frac{W^2 - V^2R - V^2S}{V^2Z_1^2Z_2^2} = \frac{W^2 - V^2(S + R)}{V^2Z_1^2Z_2^2} = $$ $$= \frac{W^2 - V^2(S - R + 2R)}{V^2Z_1^2Z_2^2} = \frac{W^2 - V^3 - 2RV^2}{V^2Z_1^2Z_2^2}.$$
+	$$x_3 = m^2 - x_1 - x_2 = \frac{W^2}{V^2Z_1^2Z_2^2} - \frac{X_1}{Z_1^2} - \frac{X_2}{Z_2^2} = \frac{W^2}{V^2Z_1^2Z_2^2} - \frac{X_1}{Z_1^2}\cdot\frac{V^2Z_2^2}{V^2Z_2^2} - \frac{X_2}{Z_2^2}\cdot\frac{V^2Z_1^2}{V^2Z_1^2} = $$ $$= \frac{W^2 - V^2X_1Z_2^2 - V^2X_2Z_1^2}{V^2Z_1^2Z_2^2} = \frac{W^2 - V^2R - V^2S}{V^2Z_1^2Z_2^2} = \frac{W^2 - V^2(S + R)}{V^2Z_1^2Z_2^2} = $$ $$= \frac{W^2 - V^2(S - R + 2R)}{V^2Z_1^2Z_2^2} = \frac{W^2 - V^3 - 2RV^2}{V^2Z_1^2Z_2^2},$$
 	$$y_3 = m(x_1 - x_3) - y_1 = \frac{W}{VZ_1Z_2}\left(\frac{X_1}{Z_1^2} - \frac{W^2 - V^3 - 2RV^2}{V^2Z_1^2Z_2^2}\right) - \frac{Y_1}{Z_1^3} = $$ $$= \frac{W}{VZ_1Z_2}\left(\frac{V^2X_1Z_2^2 - W^2 + V^3 + 2RV^2}{V^2Z_1^2Z_2^2}\right) - \frac{Y_1}{Z_1^3} = $$ $$= \frac{W(RV^2 - [W^2 - V^3 - 2RV^2]) - V^3Y_1Z_2^3}{V^3Z_1^3Z_2^3} = $$ $$\frac{W(RV^2 - [W^2 - V^3 - 2RV^2]) - TV^3}{V^3Z_1^3Z_2^3}.$$
 	Thus, we can write:
 	$$X_3 = W^2 - V^3 - 2RV^2, \ Y_3 = W(RV^2 - X_3) - TV^3, \ Z_3 = VZ_1Z_2,$$
@@ -162,7 +162,7 @@ where $X_3,Y_3$ and $Z_3$ are computed as follows:
 	\item $Q_1 = Q_2$:  now we have to check if $y = 0$. This is equivalent to check whether  $Y / Z^3 = 0 \ \Longrightarrow \ Y = 0$, since $Z \neq 0$.
 	$$m = \frac{3x^2 + a}{2y} = \frac{3(X/Z^2)^2 + a}{2Y/Z^3} = \frac{3X^2/Z^4 + a}{2Y/Z^3} \cdot \frac{Z^4}{Z^4} = \frac{3X^2 + aZ^4}{2YZ} = \frac{W}{2YZ},$$
 	if we define $W = 3X^2 + aZ^4$.
-	$$x_3 = m^2 - 2x = \frac{W^2}{4Y^2Z^2} - 2\frac{X}{Z^2} = \frac{W^2 - 8XY^2}{4Y^2Z^2} = \frac{W^2 - 2V}{4Y^2Z^2},$$ once we define $V = 4XY^2$.
+	$$x_3 = m^2 - 2x = \frac{W^2}{4Y^2Z^2} - 2\frac{X}{Z^2} = \frac{W^2 - 8XY^2}{4Y^2Z^2} = \frac{W^2 - 2V}{4Y^2Z^2},$$ once we define $V = 4XY^2$. Moreover:
 	$$y_3 = m(x - x_3) - y = \frac{W}{2YZ}\left(\frac{X}{Z^2} - \frac{W^2 - 2V}{4Y^2Z^2}\right) - \frac{Y}{Z^3} = $$ $$= \frac{W(4XY^2 - [W^2 - 2V])}{8Y^3Z^3} - \frac{Y}{Z^3} = \frac{W(4XY^2 - [W^2 - 2V]) - 8Y^4}{8Y^3Z^3} =$$ $$= \frac{W(V - [W^2 - 2V]) - 8Y^4}{8Y^3Z^3}.$$
 	Finally we can write:
 	$$X_3 = W^2 - 2V, \ Y_3 = W(V - X_3) - 8Y^4, \ Z_3 = 2YZ,$$
@@ -190,8 +190,8 @@ We have already discussed the benefits of using a random curve; however, secp256
 Here follows the sextuple $T$ defining the secp256k1 curve:
 \begin{itemize}
 	\item The finite field $\mathbb{F}_p$ is defined by the pseudo-Mersenne prime number: 
-	$$p = \text{FFFFFFFFF} \ \ \text{FFFFFFFFF} \ \ \text{FFFFFFFFF} \ \ \text{FFFFFFFFF} \ \ \text{FFFFFFFFF}$$ 
-	$\text{FFFFFFFFF} \ \text{FFFFFFFFE} \ \text{FFFFFFC2F} =$
+	$$p = \text{FFFFFFFF} \ \ \text{FFFFFFFF} \ \ \text{FFFFFFFF} \ \ \text{FFFFFFFF} \ \ \text{FFFFFFFF}$$ 
+	$\text{FFFFFFFF} \ \text{FFFFFFFE} \ \text{FFFFFC2F} =$
 	\\
 	\\
 	$= 2^{256} - 2^{32} - 2^9 - 2^8 - 2^7 - 2^6 - 2^4 - 1.$
