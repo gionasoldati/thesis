@@ -107,7 +107,7 @@ $$= \sum_{i = 1}^{m}k_iG + \sum_{i = 1}^{n} ca_iq_iG = \sum_{i = 1}^{m}K_i + c\s
 
 \bigskip
 \noindent
-For the security proof of the scheme we refer to the original paper \cite{RefWork:11}. 
+For the security proof of the scheme we refer to the original article \cite{RefWork:11}. 
 \\
 Dealing with ECDSA and Schnorr in Chapter \ref{chpr:dss}, we have seen that in the single user setting there was the possibility to derandomize the signature algorithm without loss of security, by generating the random nonce $k$ through a deterministic function. This is done since pseudo random generation is one of the major sources of problems in cryptography. This is not anymore suggested in the multi-user setting: it is necessary to ensure to use different unpredictable values when the other signers change their $K$ values in repeated signing attempts, otherwise secret key recovery would be possible. 
 \\
