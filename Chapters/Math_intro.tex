@@ -2,14 +2,14 @@
 \label{chpr:math}
 The present study starts with an introduction to the mathematical foundations required for its understanding. The reader that is familiar with abstract algebra and elliptic curve cryptography may skip the first two chapters to deal directly with the digital signature schemes presented in Chapter \ref{chpr:dss}.
 \\
-We start with a brief presentation of the group and field's structures, deferring the introduction to elliptic curves mathematics to the second section.
+We start with a brief presentation of the group and field's structures, deferring the introduction to elliptic curves mathematics to the second section. For details and proofs see \cite{RefWork:20} and \cite{RefWork:1}.
 
 \bigskip
 
 \section{Groups and fields}
 \label{groupsfields}
 
-\begin{mydef} {\bf (Group)}: A group is a non empty set $G$ together with a binary operation $\bullet: G \times G \to G$ (called the 	group law of $G$) that satisfies:
+\begin{mydef} {\bf (Group)}: A group is a set $G \neq \emptyset$ together with a binary operation $\bullet: G \times G \to G$ (called the 	group law of $G$) that satisfies:
 	\begin{itemize}
 		\item Closure: $\forall a, b \in G  \Longrightarrow a \bullet b \in G$;
 		\item Associativity: $\forall a, b, c \in G  \Longrightarrow (a \bullet b) \bullet c = a \bullet (b \bullet c)$;
@@ -22,7 +22,7 @@ We start with a brief presentation of the group and field's structures, deferrin
 As a careful reader may have noticed, it is not required the property of commutativity. This means that, in general, the result of the operation may depend on the order of the operands. If this is not the case, meaning that the group operation is also commutative, the group is called abelian.
 \\
 Consider now a group $(G, +)$: hereinafter we will stick with the additive notation, unless otherwise specified.
-If $G$ is finite, i.e. it has a finite number of elements, we define the order of $G$ as the number of elements in $G$. We can also define the order of an element $g \in G$ to be the smallest integer $k > 0$ such that $kg = 0$\footnote{In an additive group it is natural to define the scalar multiplication: given $g \in G$ and $k \in \mathbb{N}, \ k \neq 0$, we have that $kg = g + g + ... + g$, where the summation is repeated $k - 1$ times. In a similar fashion, it is natural to define exponentiation in the multiplicative case.}, where with 0 we denote the additive identity. If $k$ is the order of $g$, then:
+If $G$ is finite, i.e. it has a finite number of elements, we define the order of $G$ as the number of elements in $G$. We can also define the order of an element $g \in G$ to be the smallest integer $k > 0$ such that $kg = 0$, where with 0 we denote the additive identity\footnote{In an additive group it is natural to define the scalar multiplication: given $g \in G$ and $k \in \mathbb{N}, \ k \neq 0$, we have that $kg = g + g + ... + g$, where the summation is repeated $k - 1$ times. In a similar fashion, it is natural to define exponentiation in the multiplicative case.}. If $k$ is the order of $g$, then:
 $$ig = jg \Longleftrightarrow i \equiv j \ (\text{mod} \ k).$$
 Indeed:
 $$ig = jg \ \Longleftrightarrow \ (i - j)g = 0 \ \Longleftrightarrow \ i - j = nk, \ n \in \mathbb{Z}\text{\textbackslash}\{0\},$$
@@ -63,7 +63,7 @@ More precisely we can give the following definition.
 
 \bigskip
 \noindent
-Another key role in the following will be played by finite fields: a finite field is simply a field with a finite number of elements. It can be shown that a finite field of order $q$, denoted as $\mathbb{F}_q$, exists if and only if $q = p^k$, where $p$ is a prime number and $k$ is a positive integer. The field of a given order is unique, up to an isomorphism (this means that there are different representations of a unique mathematical object). In a field of order $p^k$, the characteristic of the field (as defined below) is $p$: thus adding $p$ copies of any element results in the additive identity. 
+Another key role in the following will be played by finite fields: a finite field is simply a field with a finite number of elements. A finite field of order $q$, denoted as $\mathbb{F}_q$, exists if and only if $q = p^k$, where $p$ is a prime number and $k$ is a positive integer. The field of a given order is unique, up to an isomorphism (this means that there are different representations of a unique mathematical object). In a field of order $p^k$, the characteristic of the field (as defined below) is $p$: thus adding $p$ copies of any element results in the additive identity. 
 \\
 In particular we will deal with prime finite fields, i.e. the finite fields whose order is a prime number. Finite fields of order a prime $p$ may be represented by the set $\mathbb{Z}_p = \{0, 1, ..., p-1\}$ with addition and multiplication defined through modular arithmetic, that is: given $a, b \in \mathbb{F}_p$ then $r = a + b$ and $s = a * b$ are integers in $[0, p - 1]$, defined as the remainder of the divisions $(a + b)/p$ and $a*b/p$, respectively. This is usually written as: $a + b \equiv r \ (\text{mod} \ p)$ and $a * b \equiv s \ (\text{mod} \ p)$ or as $a + b \equiv r \ \text{in} \ \mathbb{F}_p$ and $a * b \equiv s \ \text{in} \ \mathbb{F}_p$ . It is easy to see that in this case the additive identity is the integer 0, while the multiplicative identity is the integer 1.
 \\
