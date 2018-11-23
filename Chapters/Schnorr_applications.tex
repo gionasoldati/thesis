@@ -29,20 +29,20 @@ Fortunately enough, the lack of some properties is not everlasting: for such a r
 
 \bigskip
 \noindent
-After this brief digression, we are ready to present the MuSig scheme (\cite{RefWork:11}). MuSig is an interactive (meaning that the scheme comprehends different rounds of communication between the participants) multi-signature scheme, based on Schnorr signature. MuSig has some very attractive properties, namely:
+After this brief digression, we are ready to present the MuSig scheme \cite{RefWork:11}. MuSig is an interactive (meaning that the scheme comprehends different rounds of communication between the participants) multi-signature scheme, based on the Schnorr signature. MuSig has some very attractive properties, namely:
 \begin{itemize}
 	\item The size of the signature is equal to the single user case;
-	\item It is provably secure in the plain public key model\footnote{The signers are only required to have a public key: they do not have to prove ownership of it, i.e. knowledge of the associated private key.};
+	\item It is provably secure in the plain public key model\footnote{The signers are only required to have a public key: they do not have to prove ownership of it, i.e. knowledge of the associated private key.}.
 \end{itemize}
-These properties, although being appealing, are not original: MuSig shares them with others scheme, in particular with the Bellare-Neven scheme (BN scheme presented in \cite{RefWork:10}). The novelty introduced by the authors is that they recovered key aggregation, meaning that to the scheme can be associated a unique joint public key, leading to a verification algorithm that is equal to the single user case: the multi-signature can be verified with respect to a single aggregated public key, leading to greater privacy since for third parties the multi-signature policy is completely hidden.
+These properties, although being appealing, are not original: MuSig shares them with other schemes, in particular with the Bellare-Neven (BN) scheme \cite{RefWork:10}. The novelty introduced by the authors is that they recovered key aggregation, meaning that to the scheme can be associated a unique joint public key, leading to a verification algorithm that is equal to the single user case: the multi-signature can be verified with respect to a single aggregated public key, leading to greater privacy since for third parties the multi-signature policy is completely hidden.
 \\
-The Bellare-Neven scheme prevents rogue key attacks relying on a particular algorithm to compute the partial signatures, avoiding a trusted setup: each participant $i \in \{1, ..., n\}$ with key pair $\{q_i, Q_i\}$ computes $s_i = k_i + c_iq_i, \ c_i = \text{hash}(\langle L \rangle\ || \ K \ || \ Q_i \ || \ m)$, where $K = \sum_{i = 1}^{n}K_i$ is the aggregated public nonce, $m$ is the message to be signed and $\langle L \rangle$ is a unique encoding of the multiset of public keys $L = \{Q_1, Q_2, ..., Q_n\}$. The signature is $(K, s)$, where $s = \sum_{i = 1}^{n}s_i$, and the verification equation is: $sG = K + \sum_{i = 1}^{n}c_iQ_i$. We can notice that a validator needs the whole set of public keys in order to check the signature. 
+The Bellare-Neven scheme prevents rogue key attacks relying on a particular algorithm to compute the partial signatures, avoiding a trusted setup: each participant $i \in \{1, ..., n\}$ with key pair $\{q_i, Q_i\}$ computes $s_i = k_i + c_iq_i, \ c_i = \text{hash}(\langle L \rangle\ || \ K \ || \ Q_i \ || \ m)$, where $K = \sum_{i = 1}^{n}K_i$ is the aggregated public nonce, $m$ is the message to be signed and $\langle L \rangle$ is a unique encoding of the multiset of public keys $L = \{Q_1, Q_2, ..., Q_n\}$, e.g. ordered lexicographically. The signature is $(K, s)$, where $s = \sum_{i = 1}^{n}s_i$, and the verification equation is: $sG = K + \sum_{i = 1}^{n}c_iQ_i$. We can notice that a validator needs the whole set of public keys in order to check the signature. 
 \\
-MuSig can be thought as a variant of BN that recovers key aggregation. The setting in which the two schemes are defined is the same: both can be proven to be secure in the plain public key model under the discrete logarithm assumption\footnote{The discrete logarithm assumption requires the DL to be hard on the selected group. This means that if the DL is hard, then the scheme is secure.}, modeling the hash functions involved as a public random oracle.
+MuSig can be thought as a variant of BN that recovers key aggregation. The setting in which the two schemes are defined is the same: both can be proven to be secure in the plain public key model under the discrete logarithm assumption\footnote{The discrete logarithm assumption requires the DL to be hard on the selected group. This means that if the DL is hard, then the scheme is secure.}, modelling the hash functions involved as a public random oracle.
 \\
 Security is to be intended in the sense that it is infeasible for an adversary to forge multi-signatures involving at least an honest participant, that is: the adversary is not able to produce on its own a signature valid for the set of public keys containing the one of the honest signer.
 \\
-We stress the fact that, from the applicative point of view, key aggregation is a fundamental property: if the scheme is usable (few interaction rounds), then we get for free privacy and accountability (MuSig is an $n$-of-$n$ scheme, so that it is possible to generate a valid signature only if all the participants agree). Indeed, thanks to key aggregation, verifiers will only see an aggregated public key: they wouldn't even know that it is indeed aggregate, since it is indistinguishable from a normal public key. This is also important from the point of view of efficiency: in Bitcoin every single node has the possibility of validating each transaction, meaning that verification efficiency and signature size are very important, more than the timing of the signing algorithm. This is why, although there are multi-signature schemes with fewer interaction rounds, we present here MuSig: the benefits of key aggregation are improved bandwidth (no need for communication of multiple public keys), privacy (aggregated public key indistinguishable from a normal one) and validation efficiency (as efficient as a normal Schnorr's verification).
+We stress the fact that, from the applicative point of view, key aggregation is a fundamental property: if the scheme is usable (few interaction rounds), then we get for free privacy and accountability (MuSig is an $n$-of-$n$ scheme, so that it is possible to generate a valid signature only if all the participants agree). Indeed, thanks to key aggregation, verifiers will only see an aggregated public key: they would not even know that it is indeed aggregate, since it is indistinguishable from a normal public key. This is also important from the point of view of efficiency: in Bitcoin every single node has the possibility of validating each transaction, meaning that verification efficiency and signature size are very important, more than the timing of the signing algorithm. This is why, although there are multi-signature schemes with fewer interaction rounds, we present here MuSig: the benefits of key aggregation are improved bandwidth (no need for communication of multiple public keys), privacy (aggregated public key indistinguishable from a normal one) and validation efficiency (as efficient as a normal Schnorr's verification).
 \\
 Moreover if the aggregated public key is not given to the verifier, it is still possible to recover it just from the set of public keys of the participant, without interaction with the signers.
 
@@ -50,9 +50,9 @@ Moreover if the aggregated public key is not given to the verifier, it is still 
 \noindent
 The plain public key setting plays a crucial role when trying to enable multi-signatures across multiple inputs of a Bitcoin transaction, resulting in a unique signature per transaction.  In case the transaction spends inputs from different owners, they will obviously need to collaborate to produce the multi-signature. Such a construction would reduce further the traffic on-chain, resulting in a benefit for all the network participants. Such a change would require the introduction of new opcodes in the Bitcoin scripting language, but this can be done via a soft fork (i.e. in a backward compatible way). To see why security in the plain public key model is fundamental to enable cross-input multi-signature, think about an attacker that identifies some outputs he wants to steal, corresponding to a set $\{Q_1, Q_2, ..., Q_{n - t}\}$ of public keys. He could try to identify another set of keys $\{Q_{n - t + 1}, ..., Q_n\}$ such that he can sign for the aggregated public key. He would be able to steal the coins just by sending a small amount of his own money to outputs corresponding to the keys he found and finally creating a transaction referencing the outputs he wants to steal and the newly created outputs in his possession: by construction he is able to forge a signature on his own for this transaction. But the plain public key model defends exactly against such a situation, since the game is won by the adversary if he is able to forge a signature over a set of keys that includes at least one key not in possession of the attacker. 
 \\
-In the setting of signature aggregation on a transaction basis, it is possible to resort to other signature schemes than MuSig (in particular the older and more reviewed BN scheme), since all the public keys involved are public.
+In the setting of signature aggregation on a transaction basis, it is possible to resort to signature schemes different from MuSig (in particular the older and more reviewed BN scheme), since all the public keys involved are public.
 \\
-Up to now we have talked about cross-input aggregation, that would reduce the number of signatures to one per transaction. Is it possible to go further? For example, is it possible to obtain a single signature on a block basis? Unfortunately it is not possible through MuSig, since the scheme is interactive: this obviously prevents aggregation on a block level. However the discussion would not be fair if we would not point out that changing signature scheme would allow aggregation on a block basis: for example the BLS signature scheme (\cite{RefWork:15}, \cite{RefWork:16}) is non interactive when it comes to aggregation. This would enable a single signature per block. However, although there is interest around BLS signatures, it is underpinned by a different cryptographic hypothesis than ECDSA and Schnorr. For this reason the Bitcoin community is working towards the implementation of Schnorr.
+Up to now we have talked about cross-input aggregation, that would reduce the number of signatures to one per transaction. Is it possible to go further? For example, is it possible to obtain a single signature on a block basis? Unfortunately it is not possible through MuSig, since the scheme is interactive: this obviously prevents aggregation on a block level. However the discussion would not be fair if we would not point out that changing signature scheme would allow aggregation on a block basis: for example the BLS signature scheme (\cite{RefWork:15}, \cite{RefWork:16}) is non interactive when it comes to aggregation. This would enable a single signature per block. However, although there is interest around BLS signatures, it is underpinned by different cryptographic hypothesis than ECDSA and Schnorr. For this reason the Bitcoin community is working towards the implementation of Schnorr.
 
 \bigskip
 \noindent
@@ -111,7 +111,7 @@ For the security proof of the scheme we refer to the original article \cite{RefW
 \\
 Dealing with ECDSA and Schnorr in Chapter \ref{chpr:dss}, we have seen that in the single user setting there was the possibility to derandomize the signature algorithm without loss of security, by generating the random nonce $k$ through a deterministic function. This is done since pseudo random generation is one of the major sources of problems in cryptography. This is not anymore suggested in the multi-user setting: it is necessary to ensure to use different unpredictable values when the other signers change their $K$ values in repeated signing attempts, otherwise secret key recovery would be possible. 
 \\
-Here follows an example taken from directly \cite{RefWork:11}: assume Alice and Bob have key pairs $\{q_A, Q_A\}$ and $\{q_B, Q_B\}$, respectively. They want to jointly produce a signature. Alice generates $k_A$ and sends $K_A = k_AG$ to Bob. In a first attempt, Bob responds with $K_B$. Alice then computes:
+Here follows an example taken directly from \cite{RefWork:11}: assume Alice and Bob have key pairs $\{q_A, Q_A\}$ and $\{q_B, Q_B\}$, respectively. They want to jointly produce a signature. Alice generates $k_A$ and sends $K_A = k_AG$ to Bob. In a first attempt, Bob responds with $K_B$. Alice then computes:
 $$K = K_A + K_B,$$
 $$c = \text{hash}_{sig}(x_K \ || \ Q \ || \ m),$$
 $$s_A = k_A + ca_Aq_A \ (\text{mod} \ n),$$
@@ -127,7 +127,7 @@ To avoid this problem, each signer must ensure that whenever any $K$ value sent 
 \label{threshold}
 With the name threshold signatures we refer to policies of the kind $m$-of-$n$, where it is necessary that at least $m$ participants of the scheme decide to collaborate to produce a valid signature. This kind of policy is very popular in Bitcoin, since it is flexible and has many applications: for example, a single user could use such a policy to improve security, storing the keys on different machines, at the same time defeating the risk of loss of some keys. 
 \\
-In this section we will study a provable secure Schnorr based threshold scheme. For the security proof we refer to \cite{RefWork:14}. The scheme is constructed on top of the Pedersen Verifiable Secret Sharing Scheme (VSS scheme) and Pedersen's multi-party protocol to generate a random shared secret, hence we start presenting these two schemes.
+In this section we will study a provably secure Schnorr based threshold scheme. For the security proof we refer to \cite{RefWork:14}. The scheme is constructed on top of the Pedersen Verifiable Secret Sharing Scheme (VSS scheme) and Pedersen's multi-party protocol to generate a random shared secret, hence we start presenting these two schemes.
 
 \bigskip
 
@@ -150,9 +150,10 @@ After having broadcast the commitment, the secret $s$ can be shared among $P_1, 
 {\bf The dealer}:
 \begin{enumerate}
 	\item Chooses a couple of random polynomials of degree $t - 1$: 
-	$$f(u) = s + f_1u + ... + f_{t - 1}u^{t - 1}, \ f'(u) = s' + f'_1u + ... + f'_{t - 1}u^{t - 1},$$
+	$$f(u) = s + f_1u + ... + f_{t - 1}u^{t - 1} \ (\text{mod} \ n),$$
+	$$f'(u) = s' + f'_1u + ... + f'_{t - 1}u^{t - 1} \ (\text{mod} \ n),$$
 	where $s \ \text{and} \ s'$ are the committed values, while $f_i, f'_i \in \mathbb{Z}_n$ are randomly chosen for every $i \in \{1, ..., t - 1\}$;
-	\item Computes $(s_i, s'_i) = (f(i) \ (\text{mod} \ n), f'(i) \ (\text{mod} \ n))$ for $i \in \{1, ..., m\}$;
+	\item Computes $(s_i, s'_i) = (f(i), f'(i))$ for $i \in \{1, ..., m\}$;
 	\item Sends secretly $(s_i, s'_i)$ to $P_i, \forall i \in \{1, ..., m\}$;
 	\item Broadcasts the values $C_j = f_jG + f'_jH, \ \forall j \in \{1, ..., t - 1\}$.
 \end{enumerate}
@@ -165,7 +166,7 @@ After having broadcast the commitment, the secret $s$ can be shared among $P_1, 
 	\item Verifies the consistency of its share of the secret as:
 	$$s_iG + s'_iH = \sum_{j = 0}^{t - 1}i^jC_j.$$
 	If this check fails, she broadcasts a compliant against the dealer;
-	\item For each compliant from a player $i$, the dealer defends himself by broadcasting the values $(s_i, s'_i) = (f(i) \ (\text{mod} \ n), f'(i) \ (\text{mod} \ n))$ that satisfy the checking equation at point 1;
+	\item For each compliant from a player $i$, the dealer defends himself by broadcasting the values $(s_i, s'_i) = (f(i), f'(i))$ that satisfy the checking equation at point 1;
 	\item Aborts the protocol if:
 	\begin{itemize}
 		\item The dealer received more than $t$ compliants;
@@ -175,12 +176,12 @@ After having broadcast the commitment, the secret $s$ can be shared among $P_1, 
 Pedersen proved that any coalition of less than $t$ players cannot get any information about the shared secret, provided that the discrete logarithm in $E(\mathbb{F}_p)$ is hard\footnote{This is important since we are not adding cryptographic assumptions.}. For the proof we refer to the original paper \cite{RefWork:13}. Although we do not look at the proof, it may still be of interest to check why the verification procedure at step 1 should succeed:
 $$s_iG+ s'_iH = f(i)G + f'(i)H = \sum_{j = 0}^{t- 1}f_ji^jG + \sum_{j = 0}^{t - 1}f'_ji^jH =$$
 $$= \sum_{j = 0}^{t - 1}i^j(f_jG + f'_jH)= \sum_{j = 0}^{t - 1}i^jC_j.$$
-We used the convention that $f_0 = s$ and $f'_0 = s'$. Remembering that $C_0$ commits to the secret and that the other $C_j$ commits to the polynomials, we have the assurance that the dealer is not cheating. Indeed there is one and only one polynomial of degree at most $t - 1$ satisfying $f(i) = s_i$, respectively $f'(i) = s'_i$, for $t$ values of $i$. 
+We used the convention that $f_0 = s$ and $f'_0 = s'$. Remembering that $C_0$ commits to the secret and that the other $C_j$ commits to the polynomials, we have the assurance that the dealer is not cheating. Indeed there is one and only one polynomial over $\mathbb{Z}_n$ of degree at most $t - 1$ satisfying $f(i) = s_i$, respectively $f'(i) = s'_i$, for $t$ values of $i$. 
 \\
-This is also the key property that allows the reconstruction of the secret value from any group $\mathcal{P}$ of $t$ participants. Indeed the members in $\mathcal{P}$ can recover the polynomial $f$ through the Lagrange's interpolation formula, that given a set of $t$ points $(i, s_i = f(i) \ (\text{mod} \ n))$ returns the lowest degree polynomial (in this case a $t - 1$ degree polynomial) interpolating the given points:
-$$f(u) = \sum_{i \in \mathcal{P}}f(i)\omega_i(u), \ \text{where} \ \omega_i(u) = \prod_{j \in \mathcal{P}, \ j \neq i}\frac{u - j}{i - j} \ (\text{mod} \ n).$$
+This is also the key property that allows the reconstruction of the secret value from any group $\mathcal{P}$ of $t$ participants. Indeed the members in $\mathcal{P}$ can recover the polynomial $f$ through the Lagrange's interpolation formula, that given a set of $t$ points $(i, s_i = f(i))$ returns the lowest degree polynomial (in this case a $t - 1$ degree polynomial) interpolating the given points:
+$$f(u) = \sum_{i \in \mathcal{P}}f(i)\omega_i(u) \ (\text{mod} \ n), \ \text{where} \ \omega_i(u) = \prod_{j \in \mathcal{P}, \ j \neq i}\frac{u - j}{i - j} \ (\text{mod} \ n).$$
 Since it holds that $s = f(0)$ by definition, the group $\mathcal{P}$ can directly reconstruct the secret as:
-$$s = f(0) = \sum_{i \in \mathcal{P}}f(i)\omega_i,  \ \text{where} \ \omega_i = \omega_i(0) = \prod_{j \in \mathcal{P}, \ j \neq i}\frac{j}{j - i} \ (\text{mod} \ n).$$
+$$s = f(0) = \sum_{i \in \mathcal{P}}f(i)\omega_i \ (\text{mod} \ n),  \ \text{where} \ \omega_i = \omega_i(0) = \prod_{j \in \mathcal{P}, \ j \neq i}\frac{j}{j - i} \ (\text{mod} \ n).$$
 
 \bigskip
 
@@ -191,12 +192,12 @@ As we pointed out before, we would like to get rid of the figure of the dealer, 
 \\
 {\bf Each participant $P_i$}:
 \begin{enumerate}
-	\item Chooses $r_i, r'_i \in \mathbb{Z}_n$ at random and verifiably shares $(r_i, r'_i)$ acting as the dealer according to the Pedersen's VSS scheme described above. Let the sharing polynomials of participant $i$ be $f_i(u) = \sum_{j = 0}^{t - 1}a_{ij}u^j$, $f'_i(u) = \sum_{j= 0}^{t - 1}a'_{ij}u^j$, where $a_{i0} = r_i$ and $a'_{i0} = r'_i$. The public commitments are $C_{ik} = a_{ik}G + a'_{ik}H$ for $k \in \{0, ..., t - 1\}$;
-	\item Sets $H_0 = \{P_j \ | \ P_j \ \text{is not detected to be cheating at step 1}\}$. The distributed secret value $r$ is equal to $\sum_{i \in H_0}r_i$ (but nobody can compute it on its own). Each participant $P_i$ sets his share of the secret at $s_i= \sum_{j \in H_0}f_j(i) \ (\text{mod} \ n)$ and set the value $s'_i = \sum_{j \in H_0}f'_j(i) \ (\text{mod} \ n)$ (the share of the secret is simply equal to the sum of the partial shares received from honest participants);
+	\item Chooses $r_i, r'_i \in \mathbb{Z}_n$ at random and verifiably shares $(r_i, r'_i)$ acting as the dealer according to the Pedersen's VSS scheme described above. Let the sharing polynomials of participant $i$ be $f_i(u) = \sum_{j = 0}^{t - 1}a_{ij}u^j \ (\text{mod} \ n)$, $f'_i(u) = \sum_{j= 0}^{t - 1}a'_{ij}u^j \ (\text{mod} \ n)$, where $a_{i0} = r_i$ and $a'_{i0} = r'_i$. The public commitments are $C_{ik} = a_{ik}G + a'_{ik}H$ for $k \in \{0, ..., t - 1\}$;
+	\item Sets $H_0 = \{P_j \ | \ P_j \ \text{is not detected to be cheating at step 1}\}$. The distributed secret value $r$ is equal to $\sum_{i \in H_0}r_i \ (\text{mod} \ n)$ (but nobody can compute it on its own). Each participant $P_i$ sets his share of the secret at $s_i= \sum_{j \in H_0}f_j(i) \ (\text{mod} \ n)$ and set the value $s'_i = \sum_{j \in H_0}f'_j(i) \ (\text{mod} \ n)$ (the share of the secret is simply equal to the sum of the partial shares received from honest participants);
 	\item Each player in $H_0$ broadcasts $R_i = r_iG$ via Feldman's VSS scheme:
 	\begin{enumerate}
 		\item Each player $P_i$ in $H_0$ broadcasts $A_{ik} = a_{ik}G$ for $k \in \{0, ..., t - 1\}$;
-		\item Each player $P_j$ verifies the values broadcast by the other players in $H_0$: for each $P_i \in H_0$, $P_j$ checks:
+		\item Each player $P_j$ verifies the values broadcast by the other players in $H_0$, i.e. for each $P_i \in H_0$, $P_j$ checks:
 		$$f_i(j)G = \sum_{k = 0}^{t - 1} j^kA_{ik}.$$
 		If the check fails for an index $i$, $P_j$ complaints against $P_i$ broadcasting the values $(f_i(j), f'_i(j))$ that satisfy the checking equation of the Pedersen's VSS scheme  but not the one at point (b);
 		\item For players $P_i$ who received at least one valid complaint, the other players run the reconstruction phase of Pedersen's VSS scheme to compute $r_i$, $f_i(u)$ and $A_{ik}$ for $k \in \{0, ..., t - 1\}$. All participants in $H_0$ set $R_i = r_iG$. 
@@ -204,12 +205,12 @@ As we pointed out before, we would like to get rid of the figure of the dealer, 
 \end{enumerate}
 After the execution of the protocol the following equations hold:
 $$R = \sum_{i \in H_0} R_i = \sum_{i \in H_0}r_iG = \sum_{i \in H_0}A_{i0} = rG,$$
-$$f(u) = \sum_{i \in H_0} f_i(u) = r + a_1u + ... + a_{t - 1}u^{t - 1}, \ \text{where} \ a_i = \sum_{j \in H_0}a_{ji},$$
+$$f(u) = \sum_{i \in H_0} f_i(u) = r + a_1u + ... + a_{t - 1}u^{t - 1} \ (\text{mod} \ n), \ \text{where} \ a_i = \sum_{j \in H_0}a_{ji} \ (\text{mod} \ n),$$
 $$f(i) = s_i.$$
 We introduce the following notation: 
 $$(s_1, ..., s_n) \xleftrightarrow{\text{(t, m)}} (r|R, a_iG, H_0), \ i \in \{0, ..., t - 1\}.$$
 It means that $s_j$ is the share of secret key $r$ belonging to $P_j$ for $j \in H_0$. The values $a_iG$
-are the public commitments of the sharing polynomials and $(r, R)$ is the key pair that can be reconstructed by any subgroup of $H_0$ composed of at least $t$ participants: this can be done via Lagrange's interpolation formula, as described in Section \ref{subsec:1}.
+are the public commitments of the sharing polynomial and $\{r, R\}$ is the key pair that can be reconstructed by any subgroup of $H_0$ composed of at least $t$ participants: this can be done via Lagrange's interpolation formula, as described in Section \ref{subsec:1}.
 \\
 Before we pass to analyse the actual signature scheme, let's give a look at the checking equation at point (b) in the protocol:
 $$f_i(j)G = \sum_{k = 0}^{t - 1}a_{ik}j^kG = \sum_{k = 0}^{t - 1}j^kA_{ik}.$$
@@ -223,7 +224,7 @@ Now that we have defined the primitives on which it is built, we can finally dis
 \noindent
 {\bf Key generation}: All $m$ participants have to cooperate to generate a public key $Q$ and a share of the secret key for each participant $P_j$. This can be done relying on the protocol presented in Section \ref{subsec:2}. The output of the protocol is:
 $$(\alpha_1, ..., \alpha_m) \xleftrightarrow{\text{(t, m)}} (q|Q, b_iG, H_0), \ i \in \{0, ..., t - 1\}.$$
-The $\alpha$ values denote the secret key share belonging to $P_j$. They will be used to generate a partial signature for the key pair $(q, Q)$.
+The $\alpha$ values denote the secret key share belonging to $P_j$. They will be used to generate a partial signature for the key pair $\{q, Q\}$.
 \\
 \\
 {\bf Signing algorithm}: Let $msg$ denote the message to be signed. Suppose that a subset $H_1 \subseteq H_0$ wants to issue a signature. The members of $H_1$ proceed as follows:
@@ -237,8 +238,8 @@ The $\alpha$ values denote the secret key share belonging to $P_j$. They will be
 	\item Each $P_i \in H_2$ verifies $\forall P_l \in H_2$:
 	$$\gamma_lG = \begin{cases} K + \sum_{j = 1}^{t - 1} c_jl^jG + e\left(Q + \sum_{j = 1}^{t - 1}b_jl^jG\right), & \mbox{if } \text{jacobi}(y_K) = 1 \\ - K -\sum_{j = 1}^{t - 1} c_jl^jG + e\left(Q + \sum_{j = 1}^{t - 1}b_jl^jG\right), & \mbox{if } \text{jacobi}(y_K) \neq 1 \end{cases}$$
 	Let $H_3 = \{P_j \ | \ P_j \ \text{not detected to be cheating at step 3}\}$.
-	\item If $|H_3| < t$, aborts. Otherwise each $P_i \in H_3$ selects an arbitrary subset $H_4 \subseteq H_3$ with $|H_4| = t$ and computes $\sigma$ satisfying $\sigma = k + eq$, where:
-	$$\sigma = \sum_{j \in H_4}\gamma_j\omega_j, \ \text{where} \ \omega_j = \prod_{h \in H_4, \ h \neq j}\frac{h}{h - j}.$$
+	\item If $|H_3| < t$, aborts. Otherwise each $P_i \in H_3$ selects an arbitrary subset $H_4 \subseteq H_3$ with $|H_4| = t$ and computes $\sigma$ satisfying $\sigma = k + eq \ (\text{mod} \ n)$, where:
+	$$\sigma = \sum_{j \in H_4}\gamma_j\omega_j \ (\text{mod} \ n), \ \text{where} \ \omega_j = \prod_{h \in H_4, \ h \neq j}\frac{h}{h - j} \ (\text{mod} \ n).$$
 	The signature is $(x_K, \sigma)$; it is verified as a simple Schnorr signature.
 \end{enumerate}
 This concludes the presentation of the protocol. Nonetheless there are some formulas that deserve greater attention.
@@ -249,12 +250,12 @@ This concludes the presentation of the protocol. Nonetheless there are some form
 	$$= K + \sum_{j = 1}^{t - 1}c_jl^jG + e\left(Q + \sum_{j = 1}^{t - 1}b_jl^jG\right).$$
 	\item Formula used to compute $\sigma$: we defined $\gamma_i = \beta_i + e\alpha_i \ (\text{mod} \ n), \ \forall i \in H_2$. In particular the equation holds for every $i \in H_4$, with $|H_4| = t$. The $\alpha$ and $\beta$ values are defined to be the pointwise evaluation of the sharing polynomials created during the two iterations of the Pedersen protocol for the generation of a random shared secret, that we denote by $F_1(u)$ and $F_2(u)$. These polynomials have degree $t - 1$, so that we can define another polynomial of degree $t - 1$ as:
 	$$F_3(u) = F_2(u) + eF_1(u) \ \Longrightarrow $$
-	$$\Longrightarrow \ F_3(0) = F_2(0) + eF_1(0) = $$
-	$$= k + eq = \sigma.$$
+	$$\Longrightarrow \ F_3(0) = F_2(0) + eF_1(0) \Longrightarrow $$
+	$$\Longrightarrow \sigma := F_3(0) = k + eq \ (\text{mod} \ n).$$
 	At this point we can apply the Lagrange's interpolation formula, since we know that $F_3(u)$ satisfies by construction $F_3(i) = \gamma_i$:
-	$$F_3(u) = \sum_{j \in H_4}\gamma_j\omega_j(u), \ \text{where} \ \omega_j(u) = \prod_{h \in H_4, \ h \neq j}\frac{u - h}{j -h}.$$
+	$$F_3(u) = \sum_{j \in H_4}\gamma_j\omega_j(u) \ (\text{mod} \ n), \ \text{where} \ \omega_j(u) = \prod_{h \in H_4, \ h \neq j}\frac{u - h}{j -h} \ (\text{mod} \ n).$$
 	Thus, $\sigma$ can be directly computed as:
-	$$\sigma = F_3(0) = \sum_{j \in H_4}\gamma_j\omega_j, \ \text{where} \ \omega_j = \prod_{h \in H_4, \ h \neq j}\frac{h}{h - j}.$$
+	$$\sigma = F_3(0) = \sum_{j \in H_4}\gamma_j\omega_j \ (\text{mod} \ n), \ \text{where} \ \omega_j = \prod_{h \in H_4, \ h \neq j}\frac{h}{h - j} \ (\text{mod} \ n).$$
 \end{itemize}
 Notice that the scheme is robust, meaning that a corrupt signer who does not follow the protocol will be detected. The validity of the partial signatures computed at step 3 is immediately tested at step 4.
 
@@ -262,7 +263,7 @@ Notice that the scheme is robust, meaning that a corrupt signer who does not fol
 
 \bigskip
 \noindent
-The scheme presented is complex and cumbersome, but all the computations and interactions burden the participants who freely decided to rely on it. The Bitcoin blockchain would see a standard transaction with a single signature, indistinguishable from others. Nobody could tell that it required a threshold signature. This means that the protocol is highly private, but it comes with the downside of not being accountable, since the participants that do not sign cannot learn who instead did it. As usual, it is a matter of trade off: if accountability is desired, the naive ECDSA approach should be preferred (and will be available), otherwise users aiming at better privacy could rely on the presented Schnorr threshold scheme.
+The scheme presented is complex and cumbersome, but all the computations and interactions burden the participants who freely decided to rely on it. The Bitcoin blockchain would see a standard transaction with a single signature, indistinguishable from others. Nobody could tell that it required a threshold signature. This means that the protocol is highly private, but it comes with the downside of not being accountable, since the participants that do not sign cannot learn who instead did it. As usual, it is a matter of trade-offs: if accountability is desired, the naive ECDSA approach should be preferred (and will be available), otherwise users aiming at better privacy could rely on the presented Schnorr threshold scheme.
 
 \bigskip
 

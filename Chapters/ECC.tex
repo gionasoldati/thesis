@@ -21,7 +21,7 @@ It can be shown that the formulas for point addition are the same derived in Sec
 \end{center}
 In Figure \ref{fig:figure4} the typical shape of an elliptic curve over a finite field is represented: we can see that we are not anymore dealing with a smooth curve, but with a finite set of points scattered along the plane. We can notice a certain degree of symmetry with respect to the line $y = \frac{p}{2}$, with the exception of the points with $y$ coordinate equal to zero, that correspond to the roots of the cubic $x^3 + ax + b$ in $\mathbb{F}_p$.
 \\
-It is still possible to define a geometric method for point addition: the general idea is that we draw the line passing through the points considered. Since we are working in modular arithmetic, this line "repeats" itself along the plane. Once the line intersects a third point, we take the opposite one to be the result of the addition. The approach is presented in Figure \ref{fig:figure5}, however the method can be somewhat counterintuitive, especially when dealing with point doubling, so we stick with the algebraic notation.
+It is still possible to define a geometric method for point addition: the general idea is that we draw the line passing through the points considered. Since we are working in modular arithmetic, this line ``repeats" itself along the plane. Once the line intersects a third point, we take the opposite one to be the result of the addition. The approach is presented in Figure \ref{fig:figure5}, however the method can be somewhat counterintuitive, especially when dealing with point doubling, so we stick with the algebraic notation.
 
 \bigskip
 \noindent
@@ -37,7 +37,7 @@ The number of points on an EC over $\mathbb{F}_q$ plays a central role in the cr
 \noindent
 Loosely speaking, Hasse's theorem tells us that the number of points over $E(\mathbb{F}_q)$ increases linearly with the order of the field.
 \\
-Another observation we want to do is that if $\#E(\mathbb{F}_p)$ is a prime number, then $E(\mathbb{F}_p)$ is a cyclic group: this is a direct consequence of Lagrange's theorem. Since the order of each subgroup is a divisor of the order of the group, we have that, if the order of the group is a prime number, there is no subgroup (with the exception of the trivial one, comprising only the point at infinity). This means that it has to exist a generator of the whole group. Suppose this is not the case, i.e. $\nexists G \in E(\mathbb{F}_p) \ | \ \forall Q \in E(\mathbb{F}_p) \ \exists q \in [1, ..., \#E(\mathbb{F}_p)] \ \text{s.t.} \ Q = qG$: thus, $\forall G \in E(\mathbb{F}_p)$, there exists at least a $Q$ for which the relation $Q = qG$ does not hold. Fix $G$ and start adding it repeatedly to itself. Of course we would reach different points in $E(\mathbb{F}_p)$ due to the closure of the addition. However we won't be able to reach $Q$, by definition. But eventually we would reach the point at infinity (when $q$ gets equal to the order of $G$): then we would start again, meaning that we would have found a cyclic subgroup. But this is in contrast with Lagrange's theorem, so that we can conclude that the whole set of elliptic curve's points form a cyclic group if $\#E(\mathbb{F}_q)$ is a prime number.
+Another observation we want to do is that if $\#E(\mathbb{F}_p)$ is a prime number, then $E(\mathbb{F}_p)$ is a cyclic group: this is a direct consequence of Lagrange's theorem. Since the order of each subgroup is a divisor of the order of the group, we have that, if the order of the group is a prime number, there is no subgroup (with the exception of the trivial one, comprising only the point at infinity). This means that it has to exist a generator of the whole group. Suppose this is not the case, i.e. $\nexists G \in E(\mathbb{F}_p) \ | \ \forall Q \in E(\mathbb{F}_p) \ \exists q \in [1, ..., \#E(\mathbb{F}_p)] \ \text{s.t.} \ Q = qG$: thus, $\forall G \in E(\mathbb{F}_p)$, there exists at least a $Q$ for which the relation $Q = qG$ does not hold. Fix $G$ and start adding it repeatedly to itself. Of course we would reach different points in $E(\mathbb{F}_p)$ due to the closure of the addition. However we won't be able to reach $Q$, by definition. But eventually we would reach the point at infinity (when $q$ gets equal to the order of $G$): then we would start again, meaning that we would have found a cyclic subgroup. But this is in contrast with Lagrange's theorem, so that we can conclude that the whole set of elliptic curve's points form a cyclic group if $\#E(\mathbb{F}_p)$ is a prime number.
 
 \bigskip
 
@@ -66,7 +66,7 @@ Now that we have explained what they are and how they can be chosen, we will sho
 \noindent
 {\bf Parameters' selection}: 
 \begin{enumerate}
-	\item Select the approximate security level in bits, $t$\footnote{The security level should be chosen such that solving the ECDLP requires $2^t$ curve's operations. The SEC standard that we are following restricts to $t \in \{80, 112, 128, 192, 256\}$.};
+	\item Select the approximate security level in bits, $t$\footnote{The security level should be chosen such that solving the Elliptic Curve Discrete Logarithm Problem (ECDLP, Section \ref{dlp}) requires $2^t$ curve's operations. The SEC standard that we are following restricts to $t \in \{80, 112, 128, 192, 256\}$.};
 	\item Choose a prime $p$ such that $\lceil log_2p\rceil = 2t$ if $80 < t < 256$, such that $\lceil log_2p\rceil = 521$ if $t = 256$ and such that $\lceil log_2p\rceil = 192$ if $t = 80$;
 	\item Select $a$ and $b$ in $\mathbb{F}_p$ such that:
 	\begin{itemize}
@@ -101,7 +101,7 @@ Notice however that the choice of the parameters does not secure against all pos
 \end{enumerate}
 If the parameters are verifiably random, it should also be checked that $(a, b)$ and/or $G$ have been correctly derived from the seed $S$.
 \\
-These checks are needed to verify that: the curve has the required difficulty level, it is defined over $\mathbb{F}_p$, it is non singular, $G$ is a point of the curve, the DL is difficult, $h$ is effectively the cofactor of $G$, $G$ has order $n$ and neither MOV nor Smart's attacks are possible.
+These checks are needed to verify that: the curve has the required difficulty level, it is defined over $\mathbb{F}_p$, it is non singular, $G$ is a point of the curve, the Discrete Logarithm (DL, Section \ref{dlp}) is difficult, $h$ is effectively the cofactor of $G$, $G$ has order $n$ and neither MOV nor Smart's attacks are possible.
 
 \bigskip
 
@@ -116,9 +116,6 @@ Given some elliptic curve domain parameters $T = (p, a, b, G, n, h)$, an ellipti
 The choice of the colours is intended to make clear what is secret and what can be made public.
 \\
 To detect transmission errors or to prevent the deliberate submit of an invalid key, it is desirable to validate the public key of the counterparties. This can be achieved following these steps:
-
-either to prevent malicious insertion of an invalid public key to enable attacks like small subgroup attacks, or to detect inadvertent coding or transmission errors.
-
 \begin{enumerate}
 	\item Check that $Q \neq \infty$;
 	\item Check that $x_Q$ and $y_Q$ are integers in $[0, p - 1]$ and that $y_Q^2 = x_Q^3 + ax_Q + b \ (\text{mod} \ p)$;
@@ -183,7 +180,7 @@ We implemented this approach in the library that can be found at \url{https://gi
 Since this work is mainly focused on applications that can be deployed in Bitcoin, we would like to present the elliptic curve over a finite field used there. This could also suggest the shape of the curves used in practice.
 \\
 \\
-The curve is named secp256k1: the naming is not casual, and its analysis could help a better understanding of the curve's properties. It begins with {\bf sec} to denote "Standards for Efficient Cryptography", the documentation from which it is taken; then it follows a {\bf p}, denoting the use of parameters over a prime field $\mathbb{F}_p$, in contrast with the so called binary fields $\mathbb{F}_{2^m}$, denoted by the letter {\bf t}; the {\bf p} is followed by a number, 256, denoting the length in bits of the field size $p$, that suggests the difficulty of solving the DL on the curve; then in comes a {\bf k} to denote parameters associated with a Koblitz curve\footnote{The name Koblitz curve used here has the same meaning as in \cite{RefWork:3}.}, to be distinguished from an {\bf r}, that would denote the use of verifiably random parameters; at last we find the sequence number {\bf 1}, meaning that this curve is the first, actually the unique, with all these characteristics.
+The curve is named secp256k1: the naming is not casual, and its analysis could help a better understanding of the curve's properties. It begins with {\bf sec} to denote "Standards for Efficient Cryptography", the documentation from which it is taken; then it follows a {\bf p}, denoting the use of parameters over a prime field $\mathbb{F}_p$, in contrast with the so called binary fields $\mathbb{F}_{2^m}$, denoted by the letter {\bf t}; the {\bf p} is followed by a number, 256, denoting the length in bits of the field size $p$, that suggests the difficulty of solving the DL on the curve; then it comes a {\bf k} to denote parameters associated with a Koblitz curve\footnote{The name Koblitz curve used here refers to the definition given in \cite{RefWork:3}.}, to be distinguished from an {\bf r}, that would denote the use of verifiably random parameters; at last we find the sequence number {\bf 1}, meaning that this curve is the first, actually the unique, with all these characteristics.
 \\
 We have already discussed the benefits of using a random curve; however, secp256k1 was constructed in a special non random way to ensure efficient computations.
 \\
@@ -225,7 +222,7 @@ Here follows the sextuple $T$ defining the secp256k1 curve:
 	$\text{AF48A03B} \ \ \text{BFD25E8C} \ \ \text{D0364141},$
 	\\
 	\\
-	$h = \text{01}$
+	$h = \text{01}$.
 \end{itemize}
 
 \bigskip
@@ -234,18 +231,18 @@ Here follows the sextuple $T$ defining the secp256k1 curve:
 
 \section{The discrete logarithm problem}
 \label{dlp}
-In this section we will deal more in depth with the obscure concept of discrete logarithm problem.
+In this section we will deal more in depth with the obscure concept of Discrete Logarithm Problem (DLP).
 \\
-In general the DLP is defined over a group $\mathbb{G}$. For the moment write $\mathbb{G}$ in multiplicative notation and consider $x, y \in \mathbb{G}$ such that $y$ is in the subgroup generated by $x$. The DLP is the problem of determining an integer $k \geq 1$ such that $x^k = y$. This explain the name, since it would mean to find $k = log_xy$.
+In general the DLP is defined over a group $\mathbb{G}$. For the moment write $\mathbb{G}$ in multiplicative notation and consider $x, y \in \mathbb{G}$ such that $y$ is in the cyclic subgroup generated by $x$. The DLP is the problem of determining an integer $k \geq 1$ such that $x^k = y$: this notation justifies the name, since it would mean to find $k = log_xy$.
 \\
 Typically, the cryptosystems whose security is based on ECC, depend on the difficulty of solving the DLP defined over the EC (ECDLP). One way of attacking the DLP is simple brute force: try all possible values of $k$ until one works. This is impractical when the answer $k$ is an integer of several hundred digits, which is a typical size used in cryptography (indeed this approach is fully exponential in the number of bits representing $k$\footnote{Assume for example to work with secp256k1, the Bitcoin curve. This means that $p \simeq 2^{256}$, and the same holds true for $n$. By brute force we try all possible values of $k$, that ranges from $1$ to $n-1$. Trying all possible $k$ would lead to a number of steps of the order $O(2^{256})$, exponential in the number of bits representing the order of the group.}). Therefore, better techniques are needed.
 \\
-More formally, the DLP can be defined as follows.
+More formally, the DLP can be defined as follows:
 \begin{mydef}
 	Let $\mathbb{G}$ be a cyclic group of order $n$ and let $g$ be a generator. An algorithm $\mathcal{A}$ is said to $(t, \epsilon)$-solve the DLP in $\mathbb{G}$ if on input a random $h \in \mathbb{G}$, it runs in time at most $t$ and returns $k \in \{0, ..., n - 1\}$ such that $h = g^x$ with probability at least $\epsilon$.
 \end{mydef}
 \noindent
-The most general algorithms that works in any group has a time upper bound of $O(|\mathbb{G}|^{\frac{1}{2}})$. But it turns out that the DLP is significantly easier in some groups than it is in others. In order of difficulty:
+The most general algorithms that works in any group has a time upper bound of $O(|\mathbb{G}|^{\frac{1}{2}})$, where with $|\mathbb{G}|$ we denote the cardinality of the set $\mathbb{G}$. But it turns out that the DLP is significantly easier in some groups than it is in others. In order of difficulty:
 \begin{enumerate}
 	\item The additive group of $\mathbb{F}_q$: the problem here can be stated as finding $k$ such that $kx = y$, i.e. we only need to find the inverse of $x$, and we have already stated that this can be done efficiently through the extended euclidean algorithm (in particular this requires $O(log_2(q))$ elementary operations, meaning that the problem can be solved in polynomial time);
 	\item The multiplicative group $\mathbb{F}_q^{\times}$: the problem here is finding $k$ such that $x^k = y$. It can be shown that there exist some algorithms that work in sub-exponential time (the so called index calculus methods);

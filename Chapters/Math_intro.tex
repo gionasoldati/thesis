@@ -25,7 +25,7 @@ Consider now a group $(G, +)$: hereinafter we will stick with the additive notat
 If $G$ is finite, i.e. it has a finite number of elements, we define the order of $G$ as the number of elements in $G$. We can also define the order of an element $g \in G$ to be the smallest integer $k > 0$ such that $kg = 0$, where with 0 we denote the additive identity\footnote{In an additive group it is natural to define the scalar multiplication: given $g \in G$ and $k \in \mathbb{N}, \ k \neq 0$, we have that $kg = g + g + ... + g$, where the summation is repeated $k - 1$ times. In a similar fashion, it is natural to define exponentiation in the multiplicative case.}. If $k$ is the order of $g$, then:
 $$ig = jg \Longleftrightarrow i \equiv j \ (\text{mod} \ k).$$
 Indeed:
-$$ig = jg \ \Longleftrightarrow \ (i - j)g = 0 \ \Longleftrightarrow \ i - j = nk, \ n \in \mathbb{Z}\text{\textbackslash}\{0\},$$
+$$ig = jg \ \Longleftrightarrow \ (i - j)g = 0 \ \Longleftrightarrow \ i - j = nk, \ n \in \mathbb{Z},$$
 from which the thesis.
 \\
 Next we state a basic result from group theory, that will turn out to be very useful in the following:
@@ -153,7 +153,7 @@ Loosely speaking we can say that:
 	\source{\url{https://en.wikipedia.org/wiki/Elliptic_curve\#The_group_law}.}
 \end{center}
 \noindent
-In order to define properly the addition of EC points we need to consider five different cases. We start taking an elliptic curve $E$ defined by the usual equation in Weierstrass form $y^2 = x^3 + ax + b, \ a,b \in \mathbb{R}$ and two points $Q_1 = (x_1, y_1), Q_2 = (x_2, y_2) \in E(\mathbb{R})$. Unless otherwise specified, we assume also that $Q_1, Q_2 \neq \infty$.
+In order to define properly the addition of EC points we need to consider five different cases. We start taking an elliptic curve $E$ defined by the usual equation in Weierstrass form $y^2 = x^3 + ax + b, \ a,b \in \mathbb{R}$ and two points $Q_1 = (x_1, y_1), \ Q_2 = (x_2, y_2) \in E(\mathbb{R})$. Unless otherwise specified, we assume also that $Q_1, Q_2 \neq \infty$.
 \begin{enumerate}
 	\item $x_1 \neq x_2$: consider the line passing through $Q_1$ and $Q_2$. In most of the cases (i.e. when neither the points are tangent points) this line will intersect the curve in a third point, that we denote as $-Q_3$. Then take the reflection with respect to the $x$-axis (i.e. change the sign of the $y$ coordinate): denote this final point as $Q_3$.
 	\\
@@ -169,7 +169,7 @@ In order to define properly the addition of EC points we need to consider five d
 	\begin{figure}
 		\noindent
 		\makebox[\textwidth]{\includegraphics[width=15cm, height=7cm]{Images/sum.eps}}
-		\captionof{figure}{Point addition: graphical representation.}
+		\captionof{figure}{Graphical representation of the point addition.}
 		\label{fig:figure3}
 	\end{figure}
 	
@@ -217,7 +217,7 @@ Now that we have clear in mind what does addition between EC points mean, we can
 \end{itemize}
 Notice that to compute the scalar multiplication for a large $k$ it is inefficient to add $Q$ to itself repeatedly. There are several faster approaches, the simplest called the {\bf Double and Add Algorithm}. 
 We stress this fact since, as we will see later on, scalar multiplication and its computational asymmetry are the key ingredients for elliptic curve cryptography: the fact is that it is easily computable\footnote{The double and add algorithm requires polynomial time in the number of bits $n$ representing the numbers involved, compared to the exponential time required by the naive approach; that is, assuming that the point doubling and the point addition require a constant time, we need $O(n^{\alpha}), \ \alpha > 1$ elementary operations, compared to $O(2^n)$. In particular on average it requires $n$ doublings and $0.5 * n$  additions, since the binary expansion of a random integer has an equal number of 1's and 0's.}
-but its inversion, the so called discrete logarithm (DL), altough not provable to be hard, is believed to be so: this means that in general we have no efficient algorithm to compute it.
+but its inversion, the so called discrete logarithm (DL), although not provable to be hard, is believed to be so: this means that in general we have no efficient algorithm to compute it.
 \\
 \\
 {\bf Double and Add Algorithm}: To compute $kQ$, start with the binary representation of $k$: $k = k_0 + 2k_1 + 2^2k_2 + ... + 2^nk_n$, where $k_0,...,k_n \in \{0, 1\}$. 
