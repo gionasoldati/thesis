@@ -193,11 +193,11 @@ As we pointed out before, we would like to get rid of the figure of the dealer, 
 {\bf Each participant $P_i$}:
 \begin{enumerate}
 	\item Chooses $r_i, r'_i \in \mathbb{Z}_n$ at random and verifiably shares $(r_i, r'_i)$ acting as the dealer according to the Pedersen's VSS scheme described above. Let the sharing polynomials of participant $i$ be $f_i(u) = \sum_{j = 0}^{t - 1}a_{ij}u^j \ (\text{mod} \ n)$, $f'_i(u) = \sum_{j= 0}^{t - 1}a'_{ij}u^j \ (\text{mod} \ n)$, where $a_{i0} = r_i$ and $a'_{i0} = r'_i$. The public commitments are $C_{ik} = a_{ik}G + a'_{ik}H$ for $k \in \{0, ..., t - 1\}$;
-	\item Sets $H_0 = \{P_j \ | \ P_j \ \text{is not detected to be cheating at step 1}\}$. The distributed secret value $r$ is equal to $\sum_{i \in H_0}r_i \ (\text{mod} \ n)$ (but nobody can compute it on its own). Each participant $P_i$ sets his share of the secret at $s_i= \sum_{j \in H_0}f_j(i) \ (\text{mod} \ n)$ and set the value $s'_i = \sum_{j \in H_0}f'_j(i) \ (\text{mod} \ n)$ (the share of the secret is simply equal to the sum of the partial shares received from honest participants);
+	\item Sets $H_0 = \{P_j \ | \ P_j \ \text{is not detected to be cheating at step 1}\}$. The distributed secret value $r$ is equal to $\sum_{i \in H_0}r_i \ (\text{mod} \ n)$ (but nobody can compute it on its own). Each participant $P_i$ sets his share of the secret at $s_i= \sum_{j \in H_0}f_j(i) \ (\text{mod} \ n)$ and sets the value $s'_i = \sum_{j \in H_0}f'_j(i) \ (\text{mod} \ n)$ (the share of the secret is simply equal to the sum of the partial shares received from honest participants);
 	\item Each player in $H_0$ broadcasts $R_i = r_iG$ via Feldman's VSS scheme:
 	\begin{enumerate}
 		\item Each player $P_i$ in $H_0$ broadcasts $A_{ik} = a_{ik}G$ for $k \in \{0, ..., t - 1\}$;
-		\item Each player $P_j$ verifies the values broadcast by the other players in $H_0$, i.e. for each $P_i \in H_0$, $P_j$ checks:
+		\item Each player $P_j$ verifies the values broadcast by the other players in $H_0$, i.e. for each $P_i \in H_0$, $P_j$ checks that:
 		$$f_i(j)G = \sum_{k = 0}^{t - 1} j^kA_{ik}.$$
 		If the check fails for an index $i$, $P_j$ complaints against $P_i$ broadcasting the values $(f_i(j), f'_i(j))$ that satisfy the checking equation of the Pedersen's VSS scheme  but not the one at point (b);
 		\item For players $P_i$ who received at least one valid complaint, the other players run the reconstruction phase of Pedersen's VSS scheme to compute $r_i$, $f_i(u)$ and $A_{ik}$ for $k \in \{0, ..., t - 1\}$. All participants in $H_0$ set $R_i = r_iG$. 
@@ -212,7 +212,7 @@ $$(s_1, ..., s_n) \xleftrightarrow{\text{(t, m)}} (r|R, a_iG, H_0), \ i \in \{0,
 It means that $s_j$ is the share of secret key $r$ belonging to $P_j$ for $j \in H_0$. The values $a_iG$
 are the public commitments of the sharing polynomial and $\{r, R\}$ is the key pair that can be reconstructed by any subgroup of $H_0$ composed of at least $t$ participants: this can be done via Lagrange's interpolation formula, as described in Section \ref{subsec:1}.
 \\
-Before we pass to analyse the actual signature scheme, let's give a look at the checking equation at point (b) in the protocol:
+Before we pass to analyse the actual signature scheme, let's give a look at the checking equation at point (b) in the protocol and verify why it should work:
 $$f_i(j)G = \sum_{k = 0}^{t - 1}a_{ik}j^kG = \sum_{k = 0}^{t - 1}j^kA_{ik}.$$
 
 \bigskip
@@ -229,7 +229,7 @@ The $\alpha$ values denote the secret key share belonging to $P_j$. They will be
 \\
 {\bf Signing algorithm}: Let $msg$ denote the message to be signed. Suppose that a subset $H_1 \subseteq H_0$ wants to issue a signature. The members of $H_1$ proceed as follows:
 \begin{enumerate}
-	\item If $|H_1| < t$, aborts. Otherwise, the subset $H_1$ generates a random shared secret following again the protocol presented in Section \ref{subsec:2}. We denote the output as:
+	\item If $|H_1| < t$, abort. Otherwise, the subset $H_1$ generates a random shared secret following again the protocol presented in Section \ref{subsec:2}. We denote the output as:
 	$$(\beta_1, ..., \beta_m) \xleftrightarrow{\text{(t, m)}} (k|K, c_iG, H_2), \ i \in \{0, ..., t - 1\};$$
 	\item If $\text{jacobi}(y_K) \neq 1$, then each player $i$ sets $\beta_i = n - \beta_i$;
 	\item If $|H_2| < t$, aborts. Otherwise, each $P_i \in H_2$ reveals
@@ -237,8 +237,8 @@ The $\alpha$ values denote the secret key share belonging to $P_j$. They will be
 	where $e = \text{int}(\text{hash}(\text{bytes}(x_K) \ || \ \text{bytes}(Q) \ || \ msg))$.
 	\item Each $P_i \in H_2$ verifies $\forall P_l \in H_2$:
 	$$\gamma_lG = \begin{cases} K + \sum_{j = 1}^{t - 1} c_jl^jG + e\left(Q + \sum_{j = 1}^{t - 1}b_jl^jG\right), & \mbox{if } \text{jacobi}(y_K) = 1 \\ - K -\sum_{j = 1}^{t - 1} c_jl^jG + e\left(Q + \sum_{j = 1}^{t - 1}b_jl^jG\right), & \mbox{if } \text{jacobi}(y_K) \neq 1 \end{cases}$$
-	Let $H_3 = \{P_j \ | \ P_j \ \text{not detected to be cheating at step 3}\}$.
-	\item If $|H_3| < t$, aborts. Otherwise each $P_i \in H_3$ selects an arbitrary subset $H_4 \subseteq H_3$ with $|H_4| = t$ and computes $\sigma$ satisfying $\sigma = k + eq \ (\text{mod} \ n)$, where:
+	Let $H_3 = \{P_j \ | \ P_j \ \text{not detected to be cheating at step 4}\}$.
+	\item If $|H_3| < t$, abort. Otherwise each $P_i \in H_3$ selects an arbitrary subset $H_4 \subseteq H_3$ with $|H_4| = t$ and computes $\sigma$ satisfying $\sigma = k + eq \ (\text{mod} \ n)$, where:
 	$$\sigma = \sum_{j \in H_4}\gamma_j\omega_j \ (\text{mod} \ n), \ \text{where} \ \omega_j = \prod_{h \in H_4, \ h \neq j}\frac{h}{h - j} \ (\text{mod} \ n).$$
 	The signature is $(x_K, \sigma)$; it is verified as a simple Schnorr signature.
 \end{enumerate}
@@ -307,7 +307,7 @@ $$e = \text{int}(\text{hash}(\text{bytes}(r') \ || \ \text{bytes}(Q_B) \ || \ m)
 $$\Longrightarrow \ s'G - eQ_B = (k + eq_B)G - eQ_B = kG = K.$$
 Then the algorithm would check whether or not $x_K$ is equal to $r' = x_{K + T}$, failing. This is because the secret nonce $k$ has not been offset by $t$.
 \\
-Although the adaptor signature is invalid, Alice can check that it is a valid adaptor signature, meaning that it is consistent. Consistency is to be intended in the sense that learning a valid signature is equivalent to learning $t$ and viceversa. This is done checking that:
+Although the adaptor signature is invalid, Alice can check that it is a valid adaptor signature, meaning that it is consistent. Consistency is to be intended in the sense that learning a valid signature is equivalent to learning $t$ and vice versa. This is done checking that:
 $$s'G = K + eQ_B.$$
 She can do this verification because she has $s'$ and $Q_B$, while from the given $x$ coordinates she is able to reconstruct both $T$ and $K + T$, from which she gets $K$. However, thanks to the difficulty of the ECDLP, she cannot find $t$.
 \\
@@ -318,7 +318,7 @@ This time, the check $x_{K + T} = r'$ would succeed.
 \\
 From this valid signature and the previously received adaptor signature, Alice can immediately recover $t$ simply by taking the difference: $s' + t - s' = t$.
 \\
-Obviously also the viceversa holds true: given the adaptor signature $(r, r', s') = (x_T, x_{K + T}, s')$ and $t$ Alice can immediately compute a valid signature as $(r', s' + t)$.
+Obviously also the vice versa holds true: given the adaptor signature $(r, r', s') = (x_T, x_{K + T}, s')$ and $t$ Alice can immediately compute a valid signature as $(r', s' + t)$.
 
 \bigskip
 \noindent
@@ -418,13 +418,13 @@ For the sake of simplicity, but without loss of generality, we assume a unitary 
 \end{enumerate}
 In the cooperative case (no refund transaction broadcast) the unlocking scripts of TX$_1$ and of TX$_2$ look exactly the same as an ordinary single user payment: moreover, since only Alice had the adaptor signatures allowing her to extract $t$, nobody but Alice and Bob can link the transactions between the two chains.
 \\
-Notice that the efficiency achievement is impressive: we were able to condensate the verbose script semantics required by HTLC in a fixed size signature: this would results, once again, in greater privacy and efficiency, leading to an improvement also in fungibility.
+Notice that the efficiency achievement is impressive: we were able to condensate the verbose script semantics required by HTLC in a fixed size signature: this would result, once again, in greater privacy and efficiency, leading to an improvement also in fungibility.
 
 \bigskip
 
 \subsection{Lightning Network}
 \label{ln}
-The Lightning Network is an example of the broader concept of payment channel, an idea originally proposed by Joseph Poon and Thaddeus Dryja in \cite{RefWork:18}: the aim of this construction is to improve the well known scalability problem of Bitcoin through the so called layer 2 solutions. The name comes from the fact that they do not scale on chain\footnote{It is nearly impossible for Bitcoin to reach the transaction volume of centralized circuits like Visa: Bitcoin processes about ten transactions per second, while Visa has been able to handle a peak of 47000 tps. It means that Visa is around 5000 times better than Bitcoin in this regard: an on-chain scale would result in a bloat of the blockchain size.}, but rather suggest the implementation of other protocols to handle off-chain transactions. The blockchain is seen as a court to which it is necessary to resort only in controversial situations or to close the channel. Although other implementations have been suggested (e.g. the eltoo protocol\footnote{The Lightning Network enforces an honest behaviour under a threat; eltoo avoids this punitive logic enforcing the possibility to update the broadcast of an old transaction, but needs the deployment of the SIGHASH\_NOINPUT soft fork proposed in \cite{BIP5}. Moreover three transactions have to be committed to the blockchain to open and close any channel.} described in \cite{RefWork:19}), nowadays layer 2 solutions leverage the HTLC presented in Section \ref{atomic}. The idea is to create bidirectional channels between the participants that transact frequently: the Lightning Network can be seen as a routed path composed by these channels, in such a way that it is not necessary to open a new channel anytime two parties want to transact.
+The Lightning Network is an example of the broader concept of payment channel, an idea originally proposed by Joseph Poon and Thaddeus Dryja in \cite{RefWork:18}: the aim of this construction is to improve the well known scalability problem of Bitcoin through the so called layer 2 solutions. The name comes from the fact that they do not scale on chain\footnote{It is nearly impossible for Bitcoin to reach the transaction volume of centralized circuits like Visa: Bitcoin processes about ten transactions per second (tps), while Visa has been able to handle a peak of 47000 tps. It means that Visa is around 5000 times better than Bitcoin in this regard: an on-chain scale would result in a bloat of the blockchain size.}, but rather suggest the implementation of other protocols to handle off-chain transactions. The blockchain is seen as a court to which it is necessary to resort only in controversial situations or to close the channel. Although other implementations have been suggested (e.g. the eltoo protocol\footnote{The Lightning Network enforces an honest behaviour under a threat; eltoo avoids this punitive logic enforcing the possibility to update the broadcast of an old transaction, but needs the deployment of the SIGHASH\_NOINPUT soft fork proposed in \cite{BIP5}. Moreover three transactions have to be committed to the blockchain to open and close any channel.} described in \cite{RefWork:19}), nowadays layer 2 solutions leverage the HTLC presented in Section \ref{atomic}. The idea is to create bidirectional channels between the participants that transact frequently: the Lightning Network can be seen as a routed path composed by these channels, in such a way that it is not necessary to open a new channel anytime two parties want to transact.
 We start presenting the basic working of the Lightning Network, that could be of interest on its own. Since its inner working is sort of an extension of the one presented when dealing with atomic swaps (being the atomicity the core property to be preserved), we will give only a low level overview.
 \\
 First we consider the example of a single channel between Alice and Bob, then we will look at how different channels can be connected to create a multi-hop payment channel.
@@ -446,7 +446,7 @@ Alice and Bob open a channel committing some funds in 2-of-2 multi-signature add
 \end{itemize}
 In Alice's transaction the roles of the two parties are exchanged. These transactions are signed by the other party, so that at any time the holder can also sign and broadcast: the revocation address is required to update the state of the channel, since its presence prevents the broadcast of an old state that is economically more appealing. This is a key problem for payment channels: any signed commitment transaction could be broadcast and the blockchain is not amendable, thus it is fundamental to prevent old commitment transactions from being broadcast (there is an economic incentive for the party that spent some money in the payment channel to broadcast an older version where he has more money). The revocation address is linked to a combination of Alice's public key and a revocation public key (revocation address = RIPEMD160(SHA-256($Q_A + Q_{rev}$))): through this mechanism, when Bob gives Alice the secret revocation key $q_{rev}$, by adding it to its private key only she is able to retrieve the funds locked in Output 1 before the lock time has elapsed. In this way, if Bob broadcast an old state Alice has some time to take action and punish Bob retrieving all the funds: this is the threat enforcing an honest behaviour we were mentioning before. Old transactions are toxic, since an erroneous broadcast would result in the funds being lost: it is better to delete intermediate states. However, revocation is not automatic: Alice has to monitor the blockchain and the same holds true for Bob.
 \\
-Anytime they want to update the balance, they exchange the revocation keys and signatures for the new commitment transactions.
+Anytime they want to update the balance, they exchange the revocation keys and signatures for the new commitment transactions, that spends always from the original funding transaction.
 \\
 The closure of a channel could happen cooperatively, so that the two parties cooperate creating a transaction with the correct balance but without any time lock, or not, meaning that one of the parties broadcast a commitment transaction for which the other party has not the revocation key: the drawback in this case is that he will need to wait for the lock time to expire.  
 
