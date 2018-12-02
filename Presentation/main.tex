@@ -1,5 +1,17 @@
 \documentclass[slidescentered]{beamer}
 
+\usepackage{tikz}
+\usetikzlibrary{backgrounds,fit, positioning,shapes}
+\usepackage{mathtools}
+\newlength{\NOTskip} 
+\def\NOT#1{\settowidth{\NOTskip}{\ensuremath{#1}}%
+	\hspace{0.5\NOTskip}\mathclap{\not}\hspace{-0.5\NOTskip}#1}
+\usepackage{url}
+\def\UrlBreaks{\do\/\do-}
+\usepackage{caption}
+\newcommand{\source}[1]{\caption*{\tiny Adapted from: {#1}} }
+\usepackage[absolute,overlay]{textpos}
+
 \mode<presentation>
 {
 	\usetheme{default}      % or try Darmstadt, Madrid, Warsaw, ...
@@ -16,6 +28,14 @@
 	\insertframenumber/\inserttotalframenumber
 }
 
+\newcommand{\backupbegin}{
+	\newcounter{framenumberappendix}
+	\setcounter{framenumberappendix}{\value{framenumber}}
+}
+\newcommand{\backupend}{
+	\addtocounter{framenumberappendix}{-\value{framenumber}}
+	\addtocounter{framenumber}{\value{framenumberappendix}} 
+}
 
 \newsavebox{\authbox}
 \sbox{\authbox}{%
@@ -34,29 +54,6 @@
 	\end{minipage}
 }
 
-\usepackage{ifxetex}
-\ifxetex
-    \usepackage{fontspec}
-    \setsansfont[Scale=0.95]{Arial}
-\fi
-\usepackage{tikz}
-\usetikzlibrary{backgrounds,fit, positioning,shapes}
-\usepackage{lipsum}
-\usepackage{wrapfig}
-\usepackage{color}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath,amssymb}
-\usepackage{mathtools}
-\newlength{\NOTskip} 
-\def\NOT#1{\settowidth{\NOTskip}{\ensuremath{#1}}%
-	\hspace{0.5\NOTskip}\mathclap{\not}\hspace{-0.5\NOTskip}#1}
-\usepackage{url}
-\def\UrlBreaks{\do\/\do-}
-\usepackage{breakurl}
-\usepackage{caption}
-\newcommand{\source}[1]{\caption*{\tiny Adapted from: {#1}} }
-\usepackage[absolute,overlay]{textpos}
-\usepackage[normalem]{ulem}
 
 \title{An Advanced Signature Scheme:}
 \subtitle{Schnorr Algorithm and its Benefits to the Bitcoin Ecosystem}
@@ -68,14 +65,14 @@
 
 \institute{School of Industrial and Information Engineering \\
 	Master of Science in Mathematical Engineering}
-\date[VLC 2013]
-{20$^{\text{th}}$ December 2018}
+\date{20$^{\text{th}}$ December 2018}
 \titlegraphic{%
 	\begin{picture}(0,0)
 	\put(30, 230){\makebox(0,0)[rt]{\includegraphics[width=2cm]{images/polimi.png}}}
 	\end{picture}}
 
-
+\setbeamertemplate{bibliography entry title}{}
+\setbeamertemplate{bibliography entry location}{}
 
 \begin{document}
 	\AtBeginSection[]{
@@ -83,16 +80,17 @@
 		\small \tableofcontents[currentsection, hideothersubsections]
 	\end{frame} 
 	}
+
     \begin{frame}
         \maketitle
     \end{frame}
-
+	
 	\begin{frame}{Introduction}
 	The Elliptic Curve Digital Signature Algorithm (ECDSA) is used in the Bitcoin protocol as signature scheme, but it has some problems:
 		\begin{enumerate}
-			\item<2 -> Efficiency (DER encoding, no batch validation, modular inversion);
-			\item<3 -> Poor implementation of higher level constructions (low privacy and fungibility, scales badly);
-			\item<4 -> Not provably secure (malleable).
+			\item Efficiency (DER encoding, no batch validation, modular inversion);
+			\item Poor implementation of higher level constructions (low privacy and fungibility, scales badly);
+			\item Not provably secure (malleable).
 		\end{enumerate}
 	\end{frame}
 
@@ -156,12 +154,12 @@
 					$$E(\mathbb{F}_p): \ y^2 = x^3 + ax + b \ (\text{mod} \ p).$$
 					It is possible to define:
 					\begin{itemize}
-						\item<2 -> Addition: \\
-						$Q_3 := Q_1 + Q_2, \ \forall Q_1, Q_2 \in E(\mathbb{F}_p)$;
-						\item<3 -> Scalar multiplication: \\
-						$nG = G + ... + G$, $\forall G \in E(\mathbb{F}_p),$ $\forall n \in \mathbb{N}$.
+						\item Addition: \\
+						$Q_3 := Q_1 + Q_2,$ 
+						\\$\forall Q_1, Q_2 \in E(\mathbb{F}_p)$;
+						\item Scalar multiplication: \\
+						$nG := G + ... + G$, $\forall G \in E(\mathbb{F}_p),$ $\forall n \in \mathbb{N}$.
 					\end{itemize}
-				\onslide<4>{Multiplication's computational asymmetry is the core of ECC.}
 			\end{column}
 			\begin{column}{0.6\linewidth}
 				\begin{tikzpicture}[
@@ -180,23 +178,15 @@
 
     
     \begin{frame}{Discrete logarithm problem}
-    	Fixed $G \in E(\mathbb{F}_p)$, we can define $Q = qG \ \ \forall q \in [1, ..., n - 1]$:
+    	Fixed $G \in E(\mathbb{F}_p)$, we can define $Q = qG \ \ \forall q \in \mathbb{N}$:
     	\begin{itemize}
-    		\item<2-> The direct operation $q \mapsto Q$ is efficient;
-    		\item<3-> The inverse operation $Q \mapsto q$ is computationally infeasible for certain groups.
+    		\item The direct operation $q \mapsto Q$ is efficient;
+    		\item The inverse operation $Q \mapsto q$ is computationally infeasible for certain groups.
     	\end{itemize}
     	
-    	\onslide<4->{Asymmetric cryptography: $\{q, Q\}$ is a key pair whose elements have complementary roles.}
-
-		\bigskip
-		
-		\onslide<5>{
-	 	\begin{block}{Double and add algorithm: $q = 41$}
-			$$41 = 1 + 8 + 32  \ \Longrightarrow \ 41G = G + 8G + 32G.$$
-		
-			\noindent
-			5 point doubling and 2 additions vs. 40 additions.
-		\end{block}}
+    	\bigskip
+    	\noindent
+    	Asymmetric cryptography: $\{q, Q\}$ is a key pair whose elements have complementary roles.
 	\end{frame}
     
     \section{Digital signature schemes}
@@ -215,7 +205,7 @@
         	\node (e) [text width=3cm, below=of d, yshift=1cm] {Bob};
         	
         	\node<1-4> (c) [xshift=2.1 cm, yshift=-1cm] {\includegraphics[scale=0.1]{images/sig.jpg}};
-        	\node<1> (f) [xshift = 2.1 cm, yshift = 1cm] {\includegraphics[scale=0.06]{images/doc.png}};
+        	\node<1> (f) [xshift = 2.1 cm, yshift = 1cm] {\includegraphics[scale=0.055]{images/doc.png}};
         	\node<2-> (f) [xshift = 2.1 cm, yshift = 1cm] {\includegraphics[scale=0.1]{images/bitcoin.png}};
         	\node<5> (c) [xshift=2.1 cm, yshift=-1cm] {\includegraphics[scale=0.1]{images/bitcoin_sig.jpg}};
 
@@ -414,40 +404,6 @@
 			\end{column}
 		\end{columns}
 	\end{frame}
-
-	\subsubsection{Batch validation}
-	\begin{frame}{Batch validation}
-		A signature $(K, s)$ is valid if $K = sG - \text{hash}(x_K \ || \ Q \ || \ m)Q$. Thus, two valid signatures $(K_0, s_0)$ and $(K_1, s_1)$ satisfies:
-		$$K_0 + K_1 = (s_0 + s_1)G - \text{hash}(x_{K_0} \ || \ Q_0 \ || \ m_0)Q_0 - \text{hash}(x_{K_1} \ || \ Q_1 \ || \ m_1)Q_1.$$
-		Insecure: introduction of random factors.
-		$$a_0K_0 + a_1K_1 =$$ $$
-		= (a_0s_0 + a_1s_1)G - a_0\text{hash}(x_{K_0} \ || \ Q_0 \ || \ m_0)Q_0 - a_1\text{hash}(x_{K_1} \ || \ Q_1 \ || \ m_1)Q_1.$$
-	\end{frame}
-
-	\begin{frame}{Batch validation - Bos-Coster's algorithm}
-		\begin{columns}
-			\begin{column}{0.5\linewidth}
-				$\ \ \ \ \ \ \ \ \ \ a_0K_0 + a_1K_1 =$ \\ $= (a_0 - a_1)K_0 + a_1(K_0 + K_1)$.
-				
-				\bigskip
-				
-				\pause
-				\begin{itemize}
-					\item<2 -> Sort the tuples according to $a_i$ in descending order;
-					\item<3 -> While the list has length larger than one:
-					\begin{itemize}
-						\item<4 ->Substitute $(a_0, K_0)$ and $(a_1, K_1)$ with $(a_0 - a_1, K_0)$ and $(a_1, K_0 + K_1)$;
-						\item<5 -> Sort the list again;
-					\end{itemize}
-					\item<6 -> When only one element remains, with very large probability it will be of the form $(1, K)$, otherwise it will be of the form $(a, K)$.
-				\end{itemize}
-			\end{column}
-			\begin{column}{0.5\linewidth}
-				\hspace*{0cm}
-				\includegraphics[scale=0.31]{images/speedup}
-			\end{column}
-		\end{columns}
-	\end{frame}
 	
 	\section{ECSSA applications}
 	
@@ -457,33 +413,24 @@
 		
 		\bigskip
 		\noindent
-		\onslide<2 ->{Bitcoin multi-signature ($t$-of-$m$) is implemented naively:
+		Bitcoin multi-signature ($t$-of-$m$) is implemented naively:
 		\begin{itemize}
-			\item<3 -> Locking script: t $<$pubKey1$>$ $<$pubKey2$>$ ... $<$pubKeym$>$ \hphantom{em} \hphantom{em} \hphantom{em} \hphantom{ipsem}m
+			\item Locking script: t $<$pubKey1$>$ $<$pubKey2$>$ ... $<$pubKeym$>$ \hphantom{em} \hphantom{em} \hphantom{em} \hphantom{ipsem}m
 			OP\_CHECKMULTISIG
-			\item<4 -> Unlocking script: 0 $<$sig1$>$ $<$sig2$>$ ... $<$sigt$>$
-		\end{itemize}}
+			\item Unlocking script: 0 $<$sig1$>$ $<$sig2$>$ ... $<$sigt$>$
+		\end{itemize}
 	
 		\bigskip
 		\noindent
-		
-%		\onslide<5-10>{\only<5-9>{Schnorr multi-signature (2-of-2) implemented naively:}
-%			\only<10>{\sout{Schnorr multi-signature (2-of-2) implemented naively:}}
-%		\begin{itemize}
-%			\item<6-10>\only<6-9>{Alice ($\{q_A, Q_A\}$) and Bob ($\{q_B, Q_B\}$) generates $K_A$ and $K_B$;}\only<10>{\sout{Alice ($\{q_A, Q_A\}$) and Bob ($\{q_B, Q_B\}$) generates $K_A$ and $K_B$;}}
-%			\item<7-10>\only<7-9>{They exchange them and set the public nonce at $K = K_A + K_B$. The joint public key is set at $Q = Q_A + Q_B$;}\only<10>{\sout{They exchange them and set the public nonce at $K = K_A + K_B$. The joint public key is set at $Q = Q_A + Q_B$;}}
-%			\item<8-10>\only<8-9>{Their partial signatures are: $s_i = k_i + \text{hash}(x_K || Q || m)q_i, \ i \in \{A, B\}$;}\only<10>{\sout{Their partial signatures are: $s_i = k_i + \text{hash}(x_K || Q || m)q_i, \ i \in \{A, B\}$;}}
-%			\item<9-10>\only<9>{The signature $(x_K, s_A + s_B)$ is valid on $m$ for public key $Q$.}\only<10>{\sout{The signature $(x_K, s_A + s_B)$ is valid on $m$ for public key $Q$.}}
-%		\end{itemize}}
 
-		\onslide<5-10>{\alert<10>{Schnorr multi-signature (2-of-2) implemented naively:}
+		\onslide<2->{\alert<3>{Schnorr multi-signature (2-of-2) implemented naively:}
 		\begin{itemize}
-			\item<6-10>\alert<10>{Alice ($\{q_A, Q_A\}$) and Bob ($\{q_B, Q_B\}$) generates $K_A$ and $K_B$;}
-			\item<7-10>\alert<10>{They exchange them and set the public nonce at $K = K_A + K_B$. The joint public key is set at $Q = Q_A + Q_B$;}
-			\item<8-10>\alert<10>{Their partial signatures are: $s_i = k_i + \text{hash}(x_K || Q || m)q_i, \ i \in \{A, B\}$;}
-			\item<9-10>\alert<10>{The signature $(x_K, s_A + s_B)$ is valid on $m$ for public key $Q$.}
+			\item\alert<3>{Alice ($\{q_A, Q_A\}$) and Bob ($\{q_B, Q_B\}$) generates $K_A$ and $K_B$;}
+			\item\alert<3>{They exchange them and set the public nonce at $K = K_A + K_B$. The joint public key is set at $Q = Q_A + Q_B$;}
+			\item\alert<3>{Their partial signatures are: $s_i = k_i + \text{hash}(x_K || Q || m)q_i, \ i \in \{A, B\}$;}
+			\item\alert<3>{The signature $(x_K, s_A + s_B)$ is valid on $m$ for public key $Q$.}
 		\end{itemize}}
-		\onslide<10>{\huge \centering \textcolor{red}{INSECURE: rogue key attack!}}
+		\onslide<3>{\huge \centering \textcolor{red}{INSECURE: rogue key attack!}}
 	\end{frame}
 
 	\begin{frame}{MuSig: compact $m$-of-$m$ signature scheme}
@@ -508,13 +455,13 @@
 					\item<18 -> \textbf{return} $(x_K , s)$.
 				\end{enumerate}
 			}
-			\only<19-21>
+			\only<19>
 			{
 			MuSig ($\mu\Sigma$):
 			\begin{itemize}
-				\item<19-21> Compact: same size as the single user case;
-				\item<20-21> Secure in the plain public key model: cross input aggregation at transaction level;
-				\item<21> Key aggregation: signature indistinguishable from the single user case.
+				\item Compact: same size as the single user case;
+				\item Secure in the plain public key model: cross input aggregation at transaction level;
+				\item Key aggregation: signature indistinguishable from the single user case.
 			\end{itemize}
 			}
 			\end{column}
@@ -555,11 +502,9 @@
 							\draw [->] (g) -- (a);};
 						\only<9>{\node (i) [right=of a, xshift=-0.8cm, yshift=0.3cm] {$K_2$}};
 						\only<9>{\node (i) [below=of a, xshift=1.2cm, yshift=0.9cm] {$K_3$}};
-						\only<10>{\node (i) [right=of a, xshift=-1.7cm, yshift=1cm] {\small $t_2 \stackrel{?}{=} \text{hash}(K_2)$}};
-						\only<10>{\node (i) [right=of a, xshift=-1.7cm, yshift=0.5cm] {\small $t_3 \stackrel{?}{=} \text{hash}(K_3)$}};
+						\only<10>{\node (i) [right=of a, xshift=-1.6cm, yshift=0.5cm] {\includegraphics[scale=0.06]{images/check1.png}};}
 						\only<11>{\node (i) [right=of a, xshift=-1.5cm, yshift=0.5cm] {$K$}};
-						\only<12>{\node (i) [right=of a, xshift=-2cm, yshift=1cm] {\small \textbf{if} $\text{jacobi}(y_K) \neq 1$:}};
-						\only<12>{\node (i) [right=of a, xshift=-2cm, yshift=0.5cm] {\small $\ \ \ k_1 \gets n - k_1$}};
+						\only<12>{\node (i) [right=of a, xshift=-1.6cm, yshift=0.5cm] {\includegraphics[scale=0.06]{images/check2.png}};}
 						\only<13>{\node (i) [right=of a, xshift=-1.5cm, yshift=0.5cm] {$c$}};
 						\only<14>{\node (i) [right=of a, xshift=-1.5cm, yshift=0.5cm] {$s_1$}};
 						\only<15>{\draw[->] (a) -- (d);
@@ -707,7 +652,7 @@
 						\draw [->] (a) -- (g);
 						\node [right=of a, xshift=-1.5cm, yshift=-1.7cm] {$C_j$};
 						\node [right=of a, xshift=-3.8cm, yshift=-1.7cm] {$C_j$};};
-					\only<11> {\node [above=of d, xshift=1.75cm, yshift=-1.6cm] {\includegraphics[scale=0.07]{images/pensiero.jpg}};}
+					\only<11> {\node [above=of d, xshift=1.75cm, yshift=-1.6cm] {\includegraphics[scale=0.07]{images/pensiero}};}
 					\only<12>{\draw [->] (d) -- (g);
 						\draw [->] (g) -- (d);
 						\node [right=of d, xshift=-0.8cm, yshift=0.3cm] {$s$};};
@@ -771,12 +716,11 @@
 		
 		\bigskip
 		\noindent
-		\onslide<2>{
 		ECSSA:
 		\begin{itemize}
 			\item Locking script: $<$jointPubKey$>$ OP\_SCHNORR
 			\item Unlocking script: $<$jointSig$>$
-		\end{itemize}}
+		\end{itemize}
 	\end{frame}
 
 	\subsection{Adaptor signatures}
@@ -785,12 +729,15 @@
 		
 		\bigskip
 		\noindent
-		\onslide<2->{How?}
-		\onslide<3->{The idea is to add to the public nonce $K$ a random $T = tG$ but still consider $k$ as private nonce: this results in an invalid signature, however learning $t$ is equivalent to learning a valid signature.}
+		The idea is to add to the public nonce $K$ a random $T = tG$ but still consider $k$ as private nonce: this results in an invalid signature, however learning $t$ is equivalent to learning a valid signature:
+		$$(x_T, x_{K + T}, s'), \ s' = k + \text{hash}(x_{K + T}||Q||m).$$
+		\centering
+		Checking equation: $s'G = K + \text{hash}(x_{K + T}||Q||m)Q.$
+		\par
 		
 		\bigskip
 		\noindent
-		\onslide<4->{If $t$ is some necessary data for the execution of a separate protocol, arbitrary steps of arbitrary protocols can be made equivalent to signature production.}
+		If $t$ is some necessary data for the execution of a separate protocol, arbitrary steps of arbitrary protocols can be made equivalent to signature production.
 	\end{frame}
 
 	\begin{frame}{Cross-chain atomic swaps}
@@ -798,12 +745,11 @@
 		
 		\bigskip
 		\noindent
-		\onslide<2->{This is done via Hashed TimeLock Contract (HTLC), special locking scripts that ensures the atomicity of the transactions on both blockchains.}
+		This is done via Hashed TimeLock Contract (HTLC), special locking scripts that ensures the atomicity of the transactions on both blockchains.
 		
 		\bigskip
 		\noindent
-		\onslide<3->{
-			OP\_IF
+		OP\_IF
 \\
 			\ \ \ \ \ OP\_HASH256 $<$digest$>$ OP\_EQUALVERIFY OP\_DUP \\ 
 			\ \ \ \ \ OP\_HASH160 $<$Bob address$>$ \\
@@ -811,11 +757,11 @@
 			\ \ \ \ \ $<$num$>$ OP\_CHECKSEQUENCEVERIFY OP\_DROP \\ 
 			\ \ \ \ \ OP\_DUP OP\_HASH160 $<$Alice addres$>$ \\
 			OP\_ENDIF \\
-			OP\_EQUALVERIFY OP\_CHECKSIG}
+			OP\_EQUALVERIFY OP\_CHECKSIG
 		
 		\bigskip
 		\noindent
-		\onslide<4->{Easily identifiable (lack of privacy) and cumbersome (high fees).}
+		\onslide<2->{Easily identifiable (lack of privacy) and cumbersome (high fees).}
 	\end{frame}
 
 	\def\bitcoin{%
@@ -827,7 +773,8 @@
 				\vrule height .3ex width .15ex\hfil}
 			\vbox{\copy2\box0}\box2}}
 
-	\begin{frame}{Cross-chain atomic swaps via adaptor signatures}
+	\begin{frame}[t]
+		\frametitle{Cross-chain atomic swaps via adaptor signatures}
 		\begin{tikzpicture}[
 		every node/.style = {% is not necessary, default node's shape is rectangle
 			align=center}
@@ -835,7 +782,7 @@
 		
 		\onslide<1->{
 		\node () at (0,0) {};
-		\node (b1) [xshift = -2cm] {\includegraphics[scale=0.1]{images/blockchain.png}};
+		\node (b1) {\includegraphics[scale=0.1]{images/blockchain.png}};
 		
 		\node (a) [right=of b1] {\includegraphics[scale=0.15]{images/Alice.jpg}};
 		\node (b) [text width=3cm, below=of a, yshift=1cm] {Alice};
@@ -845,18 +792,208 @@
 		
 		\node (b2) [right=of d] {\includegraphics[scale=0.1]{images/blockchain.png}};
 		
-		\node (btc) [above=of b1, yshift = -1cm]{\includegraphics[scale=0.05]{images/bitcoin.png}};
-		\node (eth) [above=of b2, yshift = -1cm]{\includegraphics[scale=0.05]{images/ethereum.png}};
+		\node<1-11> (btc) [above=of b1, yshift = -1cm]{\includegraphics[scale=0.05]{images/bitcoin.png}};
+		\node<12-> () [above=of b1, yshift = -1cm]{\includegraphics[scale=0.05]{images/ethereum.png}};
+		\node<1-11> (eth) [above=of b2, yshift = -1cm]{\includegraphics[scale=0.05]{images/ethereum.png}};
+		\node<12-> () [above=of b2, yshift = -1cm]{\includegraphics[scale=0.05]{images/bitcoin.png}};
 		
-		\only<2->{
+		\only<2-11>{
 		\node () [right=of a, xshift = -4.4cm, yshift=1cm] {$Q_A^{\small \bitcoin}, Q_A^{\tiny \mathsf{\Xi}}$};
 		\node () [right=of d, xshift = -1.8cm, yshift=1cm] {$Q_B^{\small \bitcoin}, Q_B^{\tiny \mathsf{\Xi}}$};}
-		\only<3->{
-		\node () [right=of a, xshift = -1.7cm, yshift = 1.2cm] {\includegraphics[scale=0.1]{images/fumetto.png}};
+		\node<3> () [right=of a, xshift = -1.7cm, yshift = 1.2cm] {\includegraphics[scale=0.1]{images/fumetto.png}};
+		\only<4-11>{
+		\node () [right=of a, xshift = -4.5cm, yshift = 0.4cm] {$Q^{\small \bitcoin}, Q^{\tiny \mathsf{\Xi}}$};
+		\node () [right=of d, xshift = -1.7cm, yshift = 0.4cm] {$Q^{\small \bitcoin}, Q^{\tiny \mathsf{\Xi}}$};}
+		\onslide<4-11>{\node (tx1) [draw, below=of b, yshift=0.7cm] {TX$_1$};
+						\node<6->[right=of tx1, xshift = -1.15cm, yshift = 0.2cm] (z) {$\xrightarrow{Q^{\small \bitcoin}}{}$};
+						\node<5->[right=of tx1, xshift = -2.7cm, yshift = 0.15cm] (z) {$\xrightarrow{1 \small \bitcoin}{}$};
+						\only<7-9>{\node (refund) [draw, right=of tx1, xshift =-0.3cm] {REF$_1$};
+						\node<8-9>[right=of refund, xshift = -1.15cm, yshift = 0.2cm] (z) {$\xrightarrow{Q_A^{\small \bitcoin}}{}$};
+						\node<9> (sig1) [below=of refund, yshift = 1cm, xshift = -0.5cm] {\includegraphics[scale=0.07]{images/sig.jpg}};
+						\node<9> (sig2) [below=of refund, yshift = 1cm, xshift = 0.5cm] {\includegraphics[scale=0.05]{images/bob_sig.png}};
+						\node<9> () [right=of a, xshift = -1.7cm, yshift = 1.2cm] {\includegraphics[scale=0.1]{images/musig.png}};
+						}
+					
+					\onslide<10->{\node (sig1) [below=of tx1, yshift = 1cm] {\includegraphics[scale=0.1]{images/sig.jpg}};
+					\only<11>{\draw[->] (tx1)--(b1);}}
+					}
+			\only<4-6,10-11>{
+						\node (tx2) [draw, below=of e, yshift=0.8cm] {TX$_2$};
+						\node<6->[right=of tx2, xshift = -1.15cm, yshift = 0.2cm] (z) {$\xrightarrow{Q^{\tiny \mathsf{\Xi}}}{}$};
+						\node<5->[right=of tx2, xshift = -2.7cm, yshift = 0.15cm] (z) {$\xrightarrow{1 \mathsf{\Xi}}{}$};
+						\onslide<10->{\node (sig1) [below=of tx2, yshift = 1cm, xshift=0.2cm] {\includegraphics[scale=0.06]{images/bob_sig.png}};
+						\only<11->{\draw[->] (tx2)--(b2);}}
+					}
+			\only<12->{
+							\node (tx1) [draw, below=of e, yshift=0.8cm, xshift = -1cm] {TX$_1$};
+							\node[right=of tx1, xshift = -1.15cm, yshift = 0.2cm] (z) {$\xrightarrow{Q^{\small \bitcoin}}{}$};
+							\node<13-> (tx3) [draw, right=of tx1, xshift = -0.3cm] {TX$_3$};
+							\node<14->[right=of tx3, xshift = -1.15cm, yshift = 0.2cm] (z) {$\xrightarrow{Q_B^{\small \bitcoin}}{}$};
+							\node (tx2) [draw, below=of b, yshift=0.7cm, xshift = -1.5cm] {TX$_2$};
+							\node[right=of tx2, xshift = -1.15cm, yshift = 0.2cm] (z) {$\xrightarrow{Q^{\tiny \mathsf{\Xi}}}{}$};
+							\node<13-> (tx4) [draw, right=of tx2, xshift = -0.4cm] {TX$_4$};
+							\node<14->[right=of tx4, xshift = -1.15cm, yshift = 0.2cm] (z) {$\xrightarrow{Q_A^{\tiny \mathsf{\Xi}}}{}$};
+						   \node<15> () [right=of a, xshift = -1.7cm, yshift = 1.2cm] {\includegraphics[scale=0.1]{images/musig_adaptor}};
+						   \node<16-> (z1) [below=of tx4, yshift = 1cm, xshift = -0.4cm] {\includegraphics[scale=0.07]{images/ethereum_sig.jpg}};
+						   \node<16-22> (z2) [below=of tx4, yshift = 1cm, xshift = 0.21cm] {\includegraphics[scale=0.05]{images/half_bob}};
+						   \node<16-> (z3) [below=of tx3, yshift = 1cm, xshift = -0.4cm] {\includegraphics[scale=0.07]{images/bitcoin_sig.jpg}};
+						   \node<16-18> (z4) [below=of tx3, yshift = 1cm, xshift = 0.21cm] {\includegraphics[scale=0.05]{images/half_bob}};
+						   \node<16-17> () [right=of e, xshift = -1.7cm, yshift = 2 cm] {t};
+						   \node<18> () [right=of z4, xshift = -1.2cm] {+ t};
+						   \node<19-> (sig2) [below=of tx3, yshift = 1cm, xshift = 0.5cm] {\includegraphics[scale=0.05]{images/bob_bitcoin.png}};
+						   \draw<20-> [->] (tx3)--(b2);
+						   \node<21>() [right=of a, xshift = -2cm, yshift=1.3cm] {\includegraphics[scale=0.065]{images/adaptor}};
+						   \node<22> () [right=of z2, xshift = -1.2cm] {+ t};
+						   \node<23-> (sig2) [below=of tx4, yshift = 1cm, xshift = 0.5cm] {\includegraphics[scale=0.05]{images/bob_ethereum.png}};
+						   \draw<24-> [->] (tx4)--(b1);
+					       }
 		}
-		}
-		
 		\end{tikzpicture}
-			
+		\only<1>{\centering \textcolor{white}{WAAA}\par}
+		\only<2> {\centering The participants have a key pair for each chain:\\ $\{q_A^{\small \bitcoin}, Q_A^{\small \bitcoin}\}$, $\{q_A^{\tiny \mathsf{\Xi}}, Q_A^{\tiny \mathsf{\Xi}}\}$, $\{q_B^{\small \bitcoin}, Q_B^{\small \bitcoin}\}$, $\{q_B^{\tiny \mathsf{\Xi}}, Q_B^{\tiny \mathsf{\Xi}}\}$.\par}
+		\only<3> {\centering According to the MuSig protocol they construct the aggregated public keys:\\ $Q^{\small \bitcoin} = \text{hash}(\langle Q_A^{\small \bitcoin}, Q_B^{\small \bitcoin} \rangle || Q_A^{\small \bitcoin})Q_A^{\small \bitcoin} +  \text{hash}(\langle Q_A^{\small \bitcoin}, Q_B^{\small \bitcoin} \rangle || Q_B^{\small \bitcoin})Q_B^{\small \bitcoin},$\\ 
+		$Q^{\tiny \mathsf{\Xi}} = \text{hash}(\langle Q_A^{\tiny \mathsf{\Xi}}, Q_B^{\tiny \mathsf{\Xi}} \rangle || Q_A^{\tiny \mathsf{\Xi}})Q_A^{\tiny \mathsf{\Xi}} +  \text{hash}(\langle Q_A^{\tiny \mathsf{\Xi}}, Q_B^{\tiny \mathsf{\Xi}} \rangle || Q_B^{\tiny \mathsf{\Xi}})Q_B^{\tiny \mathsf{\Xi}}$.\par}
+		\only<4-6> {\centering They start constructing transactions on the respective chain: 
+		\begin{itemize}
+			\item<5-> They agree on the exchange rate;
+			\item<6-> The funds are locked with the aggregated public keys. 
+		\end{itemize}
+		\par}
+	\only<7-9> {\centering Before signing, they construct a refund transaction (here Alice's example). Both transactions have to be time locked and the time lock over Bob's transaction has to be greater.
+	\only<9> {To sign it, the participants have to interact via the MuSig protocol.}\par}
+	\only<10-11> {\centering Having the refund transactions, Alice and Bob can confidently sign TX$_1$ and TX$_2$.
+	\only<11>{Then they broadcast them and wait for confirmation.}\par}
+	\only<12-15>{\centering At this point they construct transactions to grab the other coin:
+	\only<15>{they need to resort to the MuSig protocol to generate valid signatures; to ensure atomicity, Bob produces two adaptor signatures using the same secret value $t$.}\par}
+	\only<16>{\centering Alice has to check that the two signatures are valid adaptor signatures and that it has been used the same secret value.\par}
+	\only<17>{\centering This results in two partial (invalid) signatures: $(x_{K_A^{\tiny \bitcoin} + K_B^{\tiny \bitcoin} + T}, s'^{\tiny \bitcoin})$ and $(x_{K_A^{\tiny \mathsf{\Xi}} + K_B^{\tiny \mathsf{\Xi}} + T}, s'^{\tiny \mathsf{\Xi}})$, with $s'^{\tiny \bitcoin} = k_A^{\tiny \bitcoin} + k_B^{\tiny \bitcoin} + \text{hash}(x_{K_A^{\tiny \bitcoin} + K_B^{\tiny \bitcoin} + T}||Q^{\tiny \bitcoin}||\text{TX}_3)(q_A^{\tiny \bitcoin} + q_B^{\tiny \bitcoin})$ and $s'^{\tiny \mathsf{\Xi}} = k_A^{\tiny \mathsf{\Xi}} + k_B^{\tiny \mathsf{\Xi}} + \text{hash}(x_{K_A^{\tiny \mathsf{\Xi}} + K_B^{\tiny \mathsf{\Xi}} + T}||Q^{\tiny \mathsf{\Xi}}||\text{TX}_4)(q_A^{\tiny \mathsf{\Xi}} + q_B^{\tiny \mathsf{\Xi}})$.\par}
+	\only<18-19>{\centering Whenever Bob wants to take the coins he can add $t$ to the adaptor signature, making it valid: $(x_{K_A^{\tiny \bitcoin} + K_B^{\tiny \bitcoin} + T}, s'^{\tiny \bitcoin} + t)$.\par}
+	\only<20>{\centering Now he can broadcast to the blockchain.\par}
+	\only<21>{\centering Monitoring the blockchain Alice sees the valid signature: subtracting from it the adaptor signature she learns the secret $t$. \par}
+	\only<22-23>{\centering  Adding it to the other adaptor signature results again in a valid signature for TX$_4$. \par}
+	\only<24>{\centering She can now broadcast it to the blockchain: this concludes the protocol. \par}
 	\end{frame}
+
+	\begin{frame}{Cross-chain atomic swaps via adaptor signature}
+		Efficiency and privacy gains:
+		\begin{itemize}
+			\item We were able to condensate the verbose script semantics of the HTLC in a signature;
+			\item The policy is indistinguishable from the single user setting (adaptor signatures are deniable: for every signature on the blockchain one can come up with some $t$ and construct an adaptor signature);
+			\item It is impossible to link the two transactions.
+		\end{itemize}
+	\end{frame}
+
+	\section{Conclusion}
+	\begin{frame}{Conclusion}
+		We have seen that Schnorr would result in huge privacy (fungibility) and efficiency (scalability) improvements for Bitcoin:
+		\begin{itemize}
+			\item  Batch validation: a group of signatures could be validated much faster;
+			\item Smaller key size, aggregation at transaction level, reduction of scripts to signatures: smaller blockchain and hidden policies;
+			\item Also security would be affected, being Schnorr signature provably secure;
+		\end{itemize}
+	
+	\onslide<2->{But there is even more:
+		\begin{itemize}
+			\item Adaptor signatures could be applied also to layer 2 protocols (e.g. Lightning Network) with huge enhancements in privacy;
+			\item Taproot: built on top of the concepts of Merkelized Abstract Syntax Tree (MAST) and Pay-To-Contract its aim is to make any arbitrary script, no matter how complex it is, to look the same as a single signer transaction in the cooperative case.
+		\end{itemize}}
+	\end{frame}
+
+	\begin{frame}
+		\centering
+		\huge Thank you for your attention!
+		\par
+	\end{frame}
+	
+	\begin{frame}[t, allowframebreaks]
+	\frametitle{References}
+    	\setbeamertemplate{bibliography item}[text]
+    	\bibliographystyle{plain}
+		\nocite{*}
+		\bibliography{biblio}
+	\end{frame}
+	
+	\appendix
+	\backupbegin
+	\begin{frame}{Point addition - Geometric interpretation}
+		\begin{columns}
+			\begin{column}{0.5\linewidth}
+				The intuition to add points belonging to an EC defined over a finite field is the same presented for the curve defined over the real numbers: draw the line passing through the points (that repeats along the plane in this case) until it intersects a third point: then reflect this point with respect to the line $y = \frac{p}{2}$, i.e. apply the transformation $(x_3, y_3) \to (x_3, p - y_3)$.
+			\end{column}
+			\begin{column}{0.6\linewidth}
+				\begin{tikzpicture}[
+				every node/.style = {% is not necessary, default node's shape is rectangle
+					align=center}
+				]
+				
+				\node () at (0,0) {};
+				\node (a) {\includegraphics[height=5cm, width=6.6cm]{images/sum_ec_over_ff}};
+				
+				\node (b) [below=of a, yshift = 1.2cm] {\small The curve $y^2 = x^3 - x + 3 \ \text{over} \ \mathbb{F}_{127}$.};
+				\end{tikzpicture}
+			\end{column}
+		\end{columns}
+	\end{frame}
+
+	\begin{frame}{Point addition - Algebraic formulas}
+		There are some cases to be considered:
+		\begin{itemize}
+			\item $Q_2 = -Q_1$: by definition we have $Q_1 + Q_2 = \infty$, where $\infty$ is the identity element of the addition operation;
+			\item $Q_2 = \infty$: $Q_1 + Q_2 = Q_1$;
+			\item $Q_2 = Q_1$: $x_3 = m^2 - 2x_1$ and $y_3 = m(x_1 - x_3) - y_1$, where $m = \frac{3x_1^2 + a}{2y_1}$;
+			\item $Q_2 \neq \pm Q_1$: $x_3 = m^2 - x_1 - x_2$ and $y_3 = m(x_1 - x_3) - y_1$, where $m = \frac{y_2 - y_1}{x_2 - x_1}$.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Double and add algorithm}
+		Scalar multiplication is the core of ECC due to its computational asymmetry:
+		\begin{itemize}
+			\item The direct operation $q \to Q$ can be made efficiently (i.e. there exist some polynomial time algorithms);
+			\item The inverse operation $Q \to q$ in general cannot be made efficiently (i.e. do not exist sub-exponential algorithms).
+		\end{itemize}
+	
+		\bigskip
+		\noindent
+			
+		\begin{block}{Double and add algorithm: $q = 41$}
+			We decompose $q$ according to its binary representation:
+			$$41 = 1 + 8 + 32  \ \Longrightarrow \ 41G = G + 8G + 32G.$$
+			
+			\noindent
+			5 point doubling and 2 additions vs. 40 additions.
+	\end{block}
+	\end{frame}
+
+	\begin{frame}{Batch validation}
+		A signature $(K, s)$ is valid if $K = sG - \text{hash}(x_K \ || \ Q \ || \ m)Q$. Thus, two valid signatures $(K_0, s_0)$ and $(K_1, s_1)$ satisfies:
+		$$K_0 + K_1 = (s_0 + s_1)G - \text{hash}(x_{K_0} \ || \ Q_0 \ || \ m_0)Q_0 - \text{hash}(x_{K_1} \ || \ Q_1 \ || \ m_1)Q_1.$$
+		Insecure: introduction of random factors.
+		$$a_0K_0 + a_1K_1 =$$ $$
+		= (a_0s_0 + a_1s_1)G - a_0\text{hash}(x_{K_0} \ || \ Q_0 \ || \ m_0)Q_0 - a_1\text{hash}(x_{K_1} \ || \ Q_1 \ || \ m_1)Q_1.$$
+	\end{frame}
+
+	\begin{frame}{Batch validation - Bos-Coster's algorithm}
+		\begin{columns}
+			\begin{column}{0.5\linewidth}
+				$\ \ \ \ \ \ \ \ \ \ a_0K_0 + a_1K_1 =$ \\ $= (a_0 - a_1)K_0 + a_1(K_0 + K_1)$.
+				
+				\bigskip
+				
+				\begin{itemize}
+					\item Sort the tuples according to $a_i$ in descending order;
+					\item While the list has length larger than one:
+					\begin{itemize}
+						\item Substitute $(a_0, K_0)$ and $(a_1, K_1)$ with $(a_0 - a_1, K_0)$ and $(a_1, K_0 + K_1)$;
+						\item Sort the list again;
+					\end{itemize}
+					\item When only one element remains, with very large probability it will be of the form $(1, K)$, otherwise it will be of the form $(a, K)$.
+				\end{itemize}
+			\end{column}
+			\begin{column}{0.5\linewidth}
+				\hspace*{0cm}
+				\includegraphics[scale=0.3]{images/speedup}
+			\end{column}
+		\end{columns}
+	\end{frame}
+	\backupend
 \end{document}
