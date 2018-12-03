@@ -88,8 +88,8 @@
 	\begin{frame}{Introduction}
 	The Elliptic Curve Digital Signature Algorithm (ECDSA) is used in the Bitcoin protocol as signature scheme, but it has some problems:
 		\begin{enumerate}
-			\item Efficiency (DER encoding, no batch validation, modular inversion);
-			\item Poor implementation of higher level constructions (low privacy and fungibility, scales badly);
+			\item Limited efficiency (DER encoding, no batch validation, modular inversion);
+			\item Poor implementation of higher level constructions (low privacy and fungibility, limited scalability);
 			\item Not provably secure (malleable).
 		\end{enumerate}
 	\end{frame}
@@ -97,7 +97,7 @@
     \section{Mathematical background and cryptographic primitives}
     
     \subsection{Hash functions}
-    \begin{frame}{Hash functions ($\simeq$ Random functions)}
+    \begin{frame}{Hash functions ($\simeq$ Random Oracle)}
     		\begin{center}
     			\begin{tikzpicture}[
     			every node/.style = {% is not necessary, default node's shape is rectangle
@@ -180,7 +180,7 @@
     \begin{frame}{Discrete logarithm problem}
     	Fixed $G \in E(\mathbb{F}_p)$, we can define $Q = qG \ \ \forall q \in \mathbb{N}$:
     	\begin{itemize}
-    		\item The direct operation $q \mapsto Q$ is efficient;
+    		\item The direct operation $q \mapsto Q$ is efficient (\textit{double and add algorithm});
     		\item The inverse operation $Q \mapsto q$ is computationally infeasible for certain groups.
     	\end{itemize}
     	
@@ -889,7 +889,7 @@
 		\begin{itemize}
 			\item  Batch validation: a group of signatures could be validated much faster;
 			\item Smaller key size, aggregation at transaction level, reduction of scripts to signatures: smaller blockchain and hidden policies;
-			\item Also security would be affected, being Schnorr signature provably secure;
+			\item Improved security, being Schnorr signature provably secure;
 		\end{itemize}
 	
 	\onslide<2->{But there is even more:
