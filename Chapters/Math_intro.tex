@@ -70,7 +70,7 @@ In particular we will deal with prime finite fields, i.e. the finite fields whos
 Subtraction and division are defined via the additive and multiplicative inverses:
 \begin{itemize}
 	\item Subtraction: given $a \in \mathbb{F}_p$, we know by definition that there is a unique element $-a \in \mathbb{F}_p$ such that $a + (-a) = 0 \ (\text{mod} \ p)$. Then we define subtraction as: $a - b = a + (-b) \ (\text{mod} \ p), \ \forall a, b \in \mathbb{F}_p$;
-	\item Division: $\forall a \in \mathbb{F}_p \text{\textbackslash} \{0\}, \ \exists a^{-1} \ | \ a * a^{-1} = 1 \ (\text{mod} \ p)$, again by definition. Thus we can defined division as: $a / b = a * (b)^{-1}, \ \forall a, b \in \mathbb{F}_p, \ b \neq 0$.
+	\item Division: $\forall a \in \mathbb{F}_p \text{\textbackslash} \{0\}, \ \exists a^{-1} \ | \ a * a^{-1} = 1 \ (\text{mod} \ p)$, again by definition. Thus we can define division as: $a / b = a * (b)^{-1}, \ \forall a, b \in \mathbb{F}_p, \ b \neq 0$.
 \end{itemize}
 Notice that not all the finite fields $\mathbb{F}_q$ are isomorphic to $\mathbb{Z}_q$: consider for example the case $q = 2^2 = 4$. Here $p = 2$ and $k = 2$. Since two is a prime number, we have that there exists a field with four elements. But since four is not a prime number, we cannot represent this field through the set $\mathbb{Z}_4 = \{0, 1, 2, 3\}$. Consider the element 2: 2 * 0 = 0 (mod 4), 2 * 1 = 2 (mod 4), 2 * 2 = 0 (mod 4), 2 * 3 = 2 (mod 4). As we can see it does not admit a multiplicative inverse in $\mathbb{Z}_4$: for this reason $\mathbb{Z}_4$ is not a field and cannot be used as representation of $\mathbb{F}_4$.
 

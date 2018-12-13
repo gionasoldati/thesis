@@ -239,7 +239,7 @@ Typically, the cryptosystems whose security is based on ECC, depend on the diffi
 \\
 More formally, the DLP can be defined as follows:
 \begin{mydef}
-	Let $\mathbb{G}$ be a cyclic group of order $n$ and let $g$ be a generator. An algorithm $\mathcal{A}$ is said to $(t, \epsilon)$-solve the DLP in $\mathbb{G}$ if on input a random $h \in \mathbb{G}$, it runs in time at most $t$ and returns $k \in \{0, ..., n - 1\}$ such that $h = g^x$ with probability at least $\epsilon$.
+	Let $\mathbb{G}$ be a cyclic group of order $n$ and let $g$ be a generator. An algorithm $\mathcal{A}$ is said to $(t, \epsilon)$-solve the DLP in $\mathbb{G}$ if on input a random $h \in \mathbb{G}$, it runs in time at most $t$ and returns $k \in \{0, ..., n - 1\}$ such that $h = g^k$ with probability at least $\epsilon$.
 \end{mydef}
 \noindent
 The most general algorithms that works in any group has a time upper bound of $O(|\mathbb{G}|^{\frac{1}{2}})$, where with $|\mathbb{G}|$ we denote the cardinality of the set $\mathbb{G}$. But it turns out that the DLP is significantly easier in some groups than it is in others. In order of difficulty:
